@@ -10,6 +10,7 @@ import LoadingCanvas from "@/components/LoadingCanvas";
 import CreativeCanvas from "@/components/CreativeCanvas";
 import { generateProject } from "@/lib/api";
 import { CreativeProject } from "@/types/creative";
+import CreativeGraph from "@/components/canvas/CreativeGraph";
 
 interface StudioProps {
   onBack: () => void;
@@ -94,11 +95,11 @@ export default function Studio({ onBack }: StudioProps) {
           </div>
         </motion.div>
 
-        <section className="min-h-[680px] rounded-[2.5rem] border border-white/15 bg-white/[0.05] p-5 backdrop-blur-2xl">
+        <section>
           {loading ? (
             <LoadingCanvas />
           ) : project ? (
-            <CreativeCanvas project={project} />
+            <CreativeGraph project={project} />
           ) : (
             <EmptyCanvas />
           )}

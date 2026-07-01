@@ -52,21 +52,25 @@ function generateCreativeUniverse(idea: string): CreativeProject {
     agents: [
       {
         role: "Writer",
+        status: "complete" as const,
         message:
           "The story needs a clear emotional turning point where the idea becomes personal, not just visually interesting.",
       },
       {
         role: "Art Director",
+        status: "complete" as const,
         message:
           "The world should have one instantly recognizable visual signature so the project feels memorable.",
       },
       {
         role: "Producer",
+        status: "thinking" as const,
         message:
           "For a prototype, keep the scope focused: one strong concept, one hero moment, and one beautiful final export.",
       },
       {
         role: "Marketing Strategist",
+        status: "waiting" as const,
         message:
           "The pitch should focus on speed, creative empowerment, and helping anyone move from idea to execution.",
       },
@@ -80,6 +84,64 @@ function generateCreativeUniverse(idea: string): CreativeProject {
       projectBrief:
         "A polished AI-assisted creative project designed to help users move from inspiration to execution through structured creative collaboration.",
     },
+
+    nodes: [
+      {
+        id: "core",
+        title: createTitle(idea),
+        subtitle: "The central creative spark.",
+        type: "core",
+        x: 50,
+        y: 50,
+      },
+      {
+        id: "story",
+        title: "Story",
+        subtitle: "Emotional arc, conflict, and transformation.",
+        type: "story",
+        x: 50,
+        y: 18,
+      },
+      {
+        id: "characters",
+        title: "Characters",
+        subtitle: "People, personalities, and relationships.",
+        type: "character",
+        x: 22,
+        y: 40,
+      },
+      {
+        id: "world",
+        title: "World",
+        subtitle: "Setting, rules, atmosphere, and lore.",
+        type: "world",
+        x: 78,
+        y: 40,
+      },
+      {
+        id: "visual",
+        title: "Visual Style",
+        subtitle: "Color, mood, composition, and design language.",
+        type: "visual",
+        x: 28,
+        y: 75,
+      },
+      {
+        id: "marketing",
+        title: "Marketing",
+        subtitle: "Audience, positioning, and launch hook.",
+        type: "marketing",
+        x: 72,
+        y: 75,
+      },
+    ],
+    edges: [
+      { from: "core", to: "story" },
+      { from: "core", to: "characters" },
+      { from: "core", to: "world" },
+      { from: "core", to: "visual" },
+      { from: "core", to: "marketing" },
+    ],
   };
 }
 
