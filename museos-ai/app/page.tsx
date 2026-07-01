@@ -1,65 +1,144 @@
-import Image from "next/image";
+"use client";
+
+import { motion } from "framer-motion";
+import { Sparkles, Wand2, Layers3, Play, ArrowRight } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <main className="min-h-screen overflow-hidden bg-[#050510] text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(112,97,255,0.35),transparent_35%),radial-gradient(circle_at_top_right,rgba(255,96,180,0.25),transparent_30%),radial-gradient(circle_at_bottom,rgba(70,180,255,0.18),transparent_35%)]" />
+
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-8">
+        <nav className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-xl">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <span className="text-lg font-semibold tracking-tight">MuseOS</span>
+          </div>
+
+          <button className="rounded-full border border-white/15 bg-white/10 px-5 py-2 text-sm text-white/90 backdrop-blur-xl transition hover:bg-white/20">
+            Launch Studio
+          </button>
+        </nav>
+
+        <section className="flex flex-1 items-center py-20">
+          <div className="grid w-full items-center gap-14 lg:grid-cols-2">
+            <div>
+              <motion.div
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7 }}
+                className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-white/80 backdrop-blur-xl"
+              >
+                <Wand2 className="h-4 w-4" />
+                AI creative partner, not just a generator
+              </motion.div>
+
+              <motion.h1
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.1 }}
+                className="max-w-4xl text-6xl font-semibold tracking-tight md:text-7xl lg:text-8xl"
+              >
+                Turn one idea into an entire creative universe.
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="mt-7 max-w-2xl text-lg leading-8 text-white/65"
+              >
+                MuseOS transforms a single spark into stories, characters,
+                visual styles, campaigns, pitch decks, and production-ready
+                creative plans through collaborative AI agents.
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                className="mt-10 flex flex-wrap gap-4"
+              >
+                <button className="group flex items-center gap-2 rounded-full bg-white px-7 py-4 font-medium text-black transition hover:scale-[1.02]">
+                  Start Creating
+                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                </button>
+
+                <button className="flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-7 py-4 font-medium text-white backdrop-blur-xl transition hover:bg-white/20">
+                  <Play className="h-4 w-4" />
+                  Watch Demo
+                </button>
+              </motion.div>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.25 }}
+              className="relative"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <div className="rounded-[2.5rem] border border-white/15 bg-white/[0.08] p-4 shadow-2xl backdrop-blur-2xl">
+                <div className="rounded-[2rem] border border-white/10 bg-black/30 p-5">
+                  <div className="mb-5 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white/50">Creative Canvas</p>
+                      <h2 className="text-xl font-semibold">Lonely Robot Film</h2>
+                    </div>
+                    <div className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs text-emerald-200">
+                      Live AI Room
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4">
+                    <PreviewCard
+                      icon={<Layers3 className="h-5 w-5" />}
+                      title="Story World"
+                      text="A solar-powered robot discovers music in an abandoned city."
+                    />
+                    <PreviewCard
+                      icon={<Sparkles className="h-5 w-5" />}
+                      title="Creative DNA"
+                      text="Warm, cinematic, hopeful, retro-futuristic, family-friendly."
+                    />
+                    <PreviewCard
+                      icon={<Wand2 className="h-5 w-5" />}
+                      title="AI Agents"
+                      text="Writer, Art Director, Producer, and Marketing Strategist are collaborating."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-fuchsia-400/30 blur-3xl" />
+              <div className="absolute -bottom-6 -left-6 h-28 w-28 rounded-full bg-blue-400/30 blur-3xl" />
+            </motion.div>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function PreviewCard({
+  icon,
+  title,
+  text,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-white/[0.07] p-5">
+      <div className="mb-3 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
+          {icon}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        <h3 className="font-medium">{title}</h3>
+      </div>
+      <p className="text-sm leading-6 text-white/55">{text}</p>
     </div>
   );
 }
