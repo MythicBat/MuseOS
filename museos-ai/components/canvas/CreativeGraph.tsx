@@ -4,12 +4,20 @@ import { CreativeProject } from "@/types/creative";
 import CanvasNode from "@/components/canvas/CanvasNode";
 import ConnectionLine from "@/components/canvas/ConnectionLine";
 import AgentDock from "@/components/canvas/AgentDock";
+import { useState } from "react";
+import OutputModal from "@/components/canvas/OutputModal";
+import { formatOutputName } from "@/lib/helpers";
 
 interface CreativeGraphProps {
   project: CreativeProject;
 }
 
 export default function CreativeGraph({ project }: CreativeGraphProps) {
+  const [selectedOutput, setSelectedOutput] = useState<{
+    title: string;
+    content: string;
+  } | null>(null);
+
   return (
   <div>
     <div className="relative min-h-[680px] overflow-hidden rounded-[2.5rem] border border-white/15 bg-white/[0.04] p-5 backdrop-blur-2xl">
@@ -32,6 +40,36 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
     </div>
 
     <AgentDock agents={project.agents} />
+    <div className="mt-5 rounded-[32px] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-2xl">
+  <p className="mb-4 text-sm font-medium text-white/80">
+    One-Click Creative Outputs
+  </p>
+
+  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    {Object.entries(project.outputs).map(([key, value]) => (
+      <button
+        key={key}
+        onClick={() =>
+          setSelectedOutput({
+            title: formatOutputName(key),
+            content: value,
+          })
+        }
+        className="rounded-2xl border border-white/10 bg-black/25 px-4 py-4 text-left text-sm text-white/70 transition hover:bg-white/10"
+      >
+        {formatOutputName(key)}
+      </button>
+    ))}
+  </div>
+</div>
+
+{selectedOutput && (
+  <OutputModal
+    title={selectedOutput.title}
+    content={selectedOutput.content}
+    onClose={() => setSelectedOutput(null)}
+  />
+)}
   </div>
   );
 }
