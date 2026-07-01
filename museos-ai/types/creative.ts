@@ -14,6 +14,7 @@ export interface Section {
 export interface Agent {
   role: string;
   message: string;
+  status?: "thinking" | "complete" | "waiting";
 }
 
 export interface Outputs {
@@ -23,6 +24,20 @@ export interface Outputs {
   projectBrief: string;
 }
 
+export interface CanvasNode {
+  id: string;
+  title: string;
+  subtitle: string;
+  type: "core" | "story" | "character" | "visual" | "marketing" | "world" | "music";
+  x: number;
+  y: number;
+}
+
+export interface CanvasEdge {
+  from: string;
+  to: string;
+}
+
 export interface CreativeProject {
   title: string;
   idea: string;
@@ -30,4 +45,6 @@ export interface CreativeProject {
   sections: Section[];
   agents: Agent[];
   outputs: Outputs;
+  nodes: CanvasNode[];
+  edges: CanvasEdge[];
 }
