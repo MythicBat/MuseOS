@@ -7,6 +7,8 @@ import AgentDock from "@/components/canvas/AgentDock";
 import { useState } from "react";
 import OutputModal from "@/components/canvas/OutputModal";
 import { formatOutputName } from "@/lib/helpers";
+import CreativeDNAPanel from "@/components/canvas/CreativeDNAPanel";
+import Timeline from "@/components/canvas/Timeline";
 
 interface CreativeGraphProps {
   project: CreativeProject;
@@ -40,6 +42,9 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
     </div>
 
     <AgentDock agents={project.agents} />
+    <CreativeDNAPanel dna={project.dna} />
+    <Timeline />
+    
     <div className="mt-5 rounded-[32px] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-2xl">
   <p className="mb-4 text-sm font-medium text-white/80">
     One-Click Creative Outputs
