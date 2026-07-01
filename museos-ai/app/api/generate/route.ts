@@ -1,19 +1,17 @@
 import { NextResponse } from "next/server";
+import { CreativeProject } from "@/types/creative";
 
 export async function POST(req: Request) {
   try {
     const { idea } = await req.json();
 
     if (!idea || typeof idea !== "string") {
-      return NextResponse.json(
-        { error: "Idea is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Idea is required" }, { status: 400 });
     }
 
-    const data = generateCreativeUniverse(idea);
+    const project = generateCreativeUniverse(idea);
 
-    return NextResponse.json(data);
+    return NextResponse.json(project);
   } catch {
     return NextResponse.json(
       { error: "Something went wrong" },
@@ -22,12 +20,10 @@ export async function POST(req: Request) {
   }
 }
 
-function generateCreativeUniverse(idea: string) {
+function generateCreativeUniverse(idea: string): CreativeProject {
   return {
     title: createTitle(idea),
-
     idea,
-
     dna: {
       genre: "Cinematic Creative Concept",
       tone: "Emotional, imaginative, polished",
@@ -35,7 +31,6 @@ function generateCreativeUniverse(idea: string) {
       mood: "Premium, inspiring, future-facing",
       colors: ["Midnight", "Pearl", "Electric Blue"],
     },
-
     sections: [
       {
         title: "Story",
@@ -47,14 +42,13 @@ function generateCreativeUniverse(idea: string) {
       },
       {
         title: "Visual Style",
-        text: "The visual language should feel cinematic, minimal, elegant, and emotionally expressive, with strong contrast and beautiful atmospheric lighting.",
+        text: "The visual language should feel cinematic, minimal, elegant, and emotionally expressive, with strong contrast and atmospheric lighting.",
       },
       {
         title: "Marketing",
         text: "The strongest positioning is to frame this as a highly shareable creative experience that helps people turn imagination into finished outputs.",
       },
     ],
-
     agents: [
       {
         role: "Writer",
@@ -77,7 +71,6 @@ function generateCreativeUniverse(idea: string) {
           "The pitch should focus on speed, creative empowerment, and helping anyone move from idea to execution.",
       },
     ],
-
     outputs: {
       pitchSummary: `MuseOS transforms "${idea}" into a complete creative direction with story, characters, visual identity, audience strategy, and launch-ready outputs.`,
       storyboard:
