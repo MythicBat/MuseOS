@@ -7,11 +7,13 @@ import { CanvasNode } from "@/types/creative";
 interface NodeDetailPanelProps {
     node: CanvasNode;
     onClose: () => void;
+    onExpand: () => void;
 }
 
 export default function NodeDetailPanel({
     node,
     onClose,
+    onExpand,
 } : NodeDetailPanelProps) {
     return (
         <motion.div
@@ -42,7 +44,9 @@ export default function NodeDetailPanel({
                 <p className="text-sm leading-7 text-white/65">{node.subtitle}</p>
             </div>
 
-            <button className="mt-5 w-full rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition hover:scale-[1.01]">
+            <button
+                onClick={onExpand} 
+                className="mt-5 w-full rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition hover:scale-[1.01]">
                 Expand this Branch
             </button>
         </motion.div>

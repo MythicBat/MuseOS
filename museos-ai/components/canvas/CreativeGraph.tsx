@@ -1,6 +1,6 @@
 "use client";
 
-import { CreativeProject, CanvasNode as CanvasNodeType } from "@/types/creative";
+import { CreativeProject, CanvasNode as CanvasNodeType, CanvasEdge } from "@/types/creative";
 import CanvasNode from "@/components/canvas/CanvasNode";
 import ConnectionLine from "@/components/canvas/ConnectionLine";
 import AgentDock from "@/components/canvas/AgentDock";
@@ -23,6 +23,41 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
   } | null>(null);
 
   const [selectedNode, setSelectedNode] = useState<CanvasNodeType | null>(null)
+  const [nodes, setNodes] = useState<CanvasNodeType[]>(project.nodes);
+  const [edges, setEdges] = useState<CanvasEdge[]>(project.edges);
+
+  const expandNode = (node: CanvasNodeType) => {
+    const alreadyExpanded = nodes.some((item) => item.id.startsWith(`${node.id}-detail`));
+
+    if (alreadyExpanded) return;
+
+    const childNodes: CanvasNodeType[] = [
+      {
+        id: `${node.id}-detail-1`,
+        title: "Deep Direction",
+        subtitle: `A more detailed creative direction for ${node.title.toLowerCase()}.`,
+        type: node.type === "core" ? "story" : node.type,
+        x: Math.max(12, node.x - 16),
+        y: Math.min(88, node.y + 18),
+      },
+      {
+        id: `${node.id}-detail-2`,
+        title: "Signature Moment",
+        subtitle: `The memorable scene, visual, or hook that makes ${node.title.toLowerCase()} stand out`,
+        type: node.type === "core" ? "visual" : node.type,
+        x: Math.min(88, node.x + 16),
+        y: Math.min(88, node.y + 18),
+      },
+    ];
+
+    const childEdges: CanvasEdge[] = childNodes.map((child) => ({
+      from: node.id,
+      to: child.id,
+    }));
+
+    setNodes((current) => [...current, ...childNodes]);
+    setEdges((current) => [...current, ...childEdges]);
+  };
 
   return (
   <div>
@@ -30,25 +65,26 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_40%)]" />
 
       <svg className="pointer-events-none absolute inset-0 h-full w-full">
-        {project.edges.map((edge, index) => (
+        {edges.map((edge, index) => (
           <ConnectionLine
             key={`${edge.from}-${edge.to}`}
             edge={edge}
-            nodes={project.nodes}
+            nodes={nodes}
             index={index}
           />
         ))}
       </svg>
 
-      {project.nodes.map((node, index) => (
+      {nodes.map((node, index) => (
         <CanvasNode key={node.id} node={node} index={index} selected={selectedNode?.id === node.id} onClick={() => setSelectedNode(node)} />
       ))}
-      
+
       <AnimatePresence>
         {selectedNode && (
           <NodeDetailPanel
             node={selectedNode}
             onClose={() => setSelectedNode(null)}
+            onExpand={() => expandNode(selectedNode)}
           />
         )}
       </AnimatePresence>
