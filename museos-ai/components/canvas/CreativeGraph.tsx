@@ -1,6 +1,6 @@
 "use client";
 
-import { CreativeProject } from "@/types/creative";
+import { CreativeProject, CanvasNode as CanvasNodeType } from "@/types/creative";
 import CanvasNode from "@/components/canvas/CanvasNode";
 import ConnectionLine from "@/components/canvas/ConnectionLine";
 import AgentDock from "@/components/canvas/AgentDock";
@@ -9,6 +9,8 @@ import OutputModal from "@/components/canvas/OutputModal";
 import { formatOutputName } from "@/lib/helpers";
 import CreativeDNAPanel from "@/components/canvas/CreativeDNAPanel";
 import Timeline from "@/components/canvas/Timeline";
+import { AnimatePresence } from "framer-motion";
+import NodeDetailPanel from "./NodeDetailPanel";
 
 interface CreativeGraphProps {
   project: CreativeProject;
@@ -19,6 +21,8 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
     title: string;
     content: string;
   } | null>(null);
+
+  const [selectedNode, setSelectedNode] = useState<CanvasNodeType | null>(null)
 
   return (
   <div>
@@ -37,8 +41,17 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
       </svg>
 
       {project.nodes.map((node, index) => (
-        <CanvasNode key={node.id} node={node} index={index} />
+        <CanvasNode key={node.id} node={node} index={index} selected={selectedNode?.id === node.id} onClick={() => setSelectedNode(node)} />
       ))}
+      
+      <AnimatePresence>
+        {selectedNode && (
+          <NodeDetailPanel
+            node={selectedNode}
+            onClose={() => setSelectedNode(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
 
     <AgentDock agents={project.agents} />

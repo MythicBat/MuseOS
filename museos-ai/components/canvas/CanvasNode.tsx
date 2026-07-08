@@ -3,10 +3,14 @@
 import { motion } from "framer-motion";
 import { Brain, Clapperboard, Megaphone, Music, Palette, Sparkles, Wand2 } from "lucide-react";
 import { CanvasNode as CanvasNodeType } from "@/types/creative";
+import { AnimatePresence } from "framer-motion";
+import NodeDetailPanel from "./NodeDetailPanel";
 
 interface CanvasNodeProps {
   node: CanvasNodeType;
   index: number;
+  selected?: boolean;
+  onClick: () => void; 
 }
 
 const iconMap = {
@@ -19,7 +23,7 @@ const iconMap = {
   music: Music,
 };
 
-export default function CanvasNode({ node, index }: CanvasNodeProps) {
+export default function CanvasNode({ node, index, selected = false, onClick }: CanvasNodeProps) {
   const Icon = iconMap[node.type];
 
   return (
@@ -36,7 +40,9 @@ export default function CanvasNode({ node, index }: CanvasNodeProps) {
         left: `${node.x}%`,
         top: `${node.y}%`,
       }}
-      className="absolute w-56 -translate-x-1/2 -translate-y-1/2 rounded-[28px] border border-white/10 bg-white/[0.08] p-5 shadow-2xl backdrop-blur-2xl"
+      onClick={onClick}
+      className={`absolute w-56 -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-[28px] border p-5 shadow-2xl backdrop-blur-2xl transition
+        ${selected ? "border-white/40 bg-white/[0.14]" : "border-white/10 bg-white/[0.08] hover:bg-white/[0.12]"}`}
     >
       <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
         <Icon className="h-5 w-5" />
