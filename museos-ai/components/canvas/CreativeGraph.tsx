@@ -18,7 +18,7 @@ import Timeline from "@/components/canvas/Timeline";
 import NodeDetailPanel from "@/components/canvas/NodeDetailPanel";
 import CommandCore from "@/components/canvas/CommandCore";
 import { formatOutputName } from "@/lib/helpers";
-import { getRandomValues } from "crypto";
+import { runCreativeCommand } from "@/lib/api";
 
 interface CreativeGraphProps {
   project: CreativeProject;
@@ -134,34 +134,50 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
     });
   };
 
-  const runCommand = (command: string) => {
+  const runCommand = async (command: string) => {
     const lowerCommand = command.toLowerCase();
     const nodeType = getCommandNodeType(lowerCommand);
+    const nodeId = `command-${Date.now()}`;
 
-    const commandNode: CanvasNodeType = {
-      id: `command-${Date.now()}`,
+    const optimisticNode: CanvasNodeType = {
+      id: nodeId,
       title: createCommandTitle(command),
-      subtitle: createCommandSubtitle(command, nodeType),
+      subtitle: "MuseOS is refining this branch...",
       type: nodeType,
       x: getRandomPosition(25, 75),
-      y: getRandomPosition(18,88),
+      y: getRandomPosition(18, 88),
     };
 
     const commandEdge: CanvasEdge = {
       from: "core",
-      to: commandNode.id,
+      to: optimisticNode.id,
     };
 
-    setNodes((current) => [...current, commandNode]);
+    setNodes((current) => [...current, optimisticNode]);
     setEdges((current) => [...current, commandEdge]);
+    setVisibleNodes((current) => [...current, optimisticNode]);
+    setVisibleEdges((current) => [...current, commandEdge]);
 
-    setVisibleNodes((current) => 
-      current.some((item) => item.id === commandNode.id)
-        ? current : [...current, commandNode]);
-    
-    setVisibleEdges((current) =>
-      current.some((item) => item.from === commandEdge.from && item.to === commandEdge.to)
-        ? current : [...current, commandEdge]);
+    try {
+      const result = await runCreativeCommand({
+        command,
+        projectTitle: project.title,
+      });
+
+      const updatedNode: CanvasNodeType = {
+        ...optimisticNode,
+        title: result.title,
+        subtitle: result.subtitle,
+      };
+
+      setNodes((current) => 
+        current.map((node) => (node.id === nodeId ? updatedNode : node)));
+
+      setVisibleNodes((current) =>
+        current.map((node) => (node.id === nodeId ? updatedNode : node)));
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (

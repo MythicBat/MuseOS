@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Sparkles } from "lucide-react";
 
 interface CommandCoreProps {
-    onCommand: (command: string) => void;
+    onCommand: (command: string) => void | Promise<void>;
 }
 
 export default function CommandCore({ onCommand }: CommandCoreProps) {
