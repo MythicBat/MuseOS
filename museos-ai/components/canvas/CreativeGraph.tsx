@@ -36,6 +36,11 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
   const [visibleNodes, setVisibleNodes] = useState<CanvasNodeType[]>([]);
   const [visibleEdges, setVisibleEdges] = useState<CanvasEdge[]>([]);
 
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [lastMouse, setLastMouse] = useState({ x: 0, y: 0 });
+
   useEffect(() => {
     const timers: NodeJS.Timeout[] = [];
 
@@ -180,43 +185,104 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
     }
   };
 
+  const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    event.preventDefault();
+
+    setScale((current) => {
+      const next = current - event.deltaY * 0.001;
+      return Math.min(1.6, Math.max(0.65, next));
+    });
+  };
+
+  const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    if ((event.target as HTMLElement).closest("[data-canvas-node]")) return;
+
+    setIsDragging(true);
+    setLastMouse({ x: event.clientX, y: event.clientY });
+  };
+
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+
+    const dx = event.clientX - lastMouse.x;
+    const dy = event.clientY - lastMouse.y;
+
+    setOffset((current) => ({
+      x: current.x + dx,
+      y: current.y + dy,
+    }));
+
+    setLastMouse({ x: event.clientX, y: event.clientY });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const resetCanvas = () => {
+    setScale(1);
+    setOffset({ x: 0, y: 0 });
+  };
+
   return (
     <div>
-      <div className="relative min-h-[680px] overflow-hidden rounded-[2.5rem] border border-white/15 bg-white/[0.04] p-5 backdrop-blur-2xl">
+      <div 
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        className={`relative min-h-[680px] overflow-hidden rounded-[2.5rem] border border-white/15 bg-white/[0.04] p-5 backdrop-blur-2xl ${
+          isDragging ? "cursor-grabbing" : "cursor-grab"
+        }`}
+      >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_40%)]" />
 
         <CommandCore onCommand={runCommand} />
+        <button
+          onClick={resetCanvas}
+          className="absolute bottom-5 right-5 z-20 rounded-full border border-white/10 bg-black/40 px-4 py-2 text-xs text-white/60 backdrop-blur-xl transition hover:bg-white/10"
+        >
+          Reset View · {Math.round(scale * 100)}%
+        </button>
 
-        <svg className="pointer-events-none absolute inset-0 h-full w-full">
-          {visibleEdges.map((edge, index) => (
-            <ConnectionLine
-              key={`${edge.from}-${edge.to}-${index}`}
-              edge={edge}
-              nodes={visibleNodes}
+        <div
+          className="absolute inset-0 origin-center transition-transform duration-100"
+          style={{
+            transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+          }}
+        >
+          <svg className="pointer-events-none absolute inset-0 h-full w-full">
+            {visibleEdges.map((edge, index) => (
+              <ConnectionLine
+                key={`${edge.from}-${edge.to}-${index}`}
+                edge={edge}
+                nodes={visibleNodes}
+                index={index}
+              />
+            ))}
+          </svg>
+
+          {visibleNodes.map((node, index) => (
+            <CanvasNode
+              key={node.id}
+              node={node}
               index={index}
+              selected={selectedNode?.id === node.id}
+              onClick={() => setSelectedNode(node)}
             />
           ))}
-        </svg>
 
-        {visibleNodes.map((node, index) => (
-          <CanvasNode
-            key={node.id}
-            node={node}
-            index={index}
-            selected={selectedNode?.id === node.id}
-            onClick={() => setSelectedNode(node)}
-          />
-        ))}
-
-        <AnimatePresence>
-          {selectedNode && (
-            <NodeDetailPanel
-              node={selectedNode}
-              onClose={() => setSelectedNode(null)}
-              onExpand={() => expandNode(selectedNode)}
-            />
-          )}
-        </AnimatePresence>
+          <AnimatePresence>
+            {selectedNode && (
+              <NodeDetailPanel
+                node={selectedNode}
+                onClose={() => setSelectedNode(null)}
+                onExpand={() => expandNode(selectedNode)}
+              />
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       <AgentDock agents={project.agents} />
