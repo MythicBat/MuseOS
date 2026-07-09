@@ -16,6 +16,7 @@ import OutputModal from "@/components/canvas/OutputModal";
 import CreativeDNAPanel from "@/components/canvas/CreativeDNAPanel";
 import Timeline from "@/components/canvas/Timeline";
 import NodeDetailPanel from "@/components/canvas/NodeDetailPanel";
+import CommandCore from "@/components/canvas/CommandCore";
 import { formatOutputName } from "@/lib/helpers";
 
 interface CreativeGraphProps {
@@ -132,10 +133,39 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
     });
   };
 
+  const runCommand = (command: string) => {
+    const commandNode: CanvasNodeType = {
+      id: `command-${Date.now()}`,
+      title: command,
+      subtitle: "A user-directed creative refinement.",
+      type: "core",
+      x: 50,
+      y: 88,
+    };
+
+    const commandEdge: CanvasEdge = {
+      from: "core",
+      to: commandNode.id,
+    };
+
+    setNodes((current) => [...current, commandNode]);
+    setEdges((current) => [...current, commandEdge]);
+
+    setVisibleNodes((current) => 
+      current.some((item) => item.id === commandNode.id)
+        ? current : [...current, commandNode]);
+    
+    setVisibleEdges((current) =>
+      current.some((item) => item.from === commandEdge.from && item.to === commandEdge.to)
+        ? current : [...current, commandEdge]);
+  };
+
   return (
     <div>
       <div className="relative min-h-[680px] overflow-hidden rounded-[2.5rem] border border-white/15 bg-white/[0.04] p-5 backdrop-blur-2xl">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_40%)]" />
+
+        <CommandCore onCommand={runCommand} />
 
         <svg className="pointer-events-none absolute inset-0 h-full w-full">
           {visibleEdges.map((edge, index) => (
