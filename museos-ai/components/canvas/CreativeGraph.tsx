@@ -18,6 +18,7 @@ import Timeline from "@/components/canvas/Timeline";
 import NodeDetailPanel from "@/components/canvas/NodeDetailPanel";
 import CommandCore from "@/components/canvas/CommandCore";
 import { formatOutputName } from "@/lib/helpers";
+import { getRandomValues } from "crypto";
 
 interface CreativeGraphProps {
   project: CreativeProject;
@@ -134,13 +135,16 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
   };
 
   const runCommand = (command: string) => {
+    const lowerCommand = command.toLowerCase();
+    const nodeType = getCommandNodeType(lowerCommand);
+
     const commandNode: CanvasNodeType = {
       id: `command-${Date.now()}`,
-      title: command,
-      subtitle: "A user-directed creative refinement.",
-      type: "core",
-      x: 50,
-      y: 88,
+      title: createCommandTitle(command),
+      subtitle: createCommandSubtitle(command, nodeType),
+      type: nodeType,
+      x: getRandomPosition(25, 75),
+      y: getRandomPosition(18,88),
     };
 
     const commandEdge: CanvasEdge = {
@@ -235,4 +239,99 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
       )}
     </div>
   );
+}
+
+function getCommandNodeType(command: string): CanvasNodeType["type"] {
+  if (
+    command.includes("character") ||
+    command.includes("villain") ||
+    command.includes("hero") ||
+    command.includes("protagonist")
+  ) {
+    return "character";
+  }
+
+  if (
+    command.includes("visual") ||
+    command.includes("color") ||
+    command.includes("poster") ||
+    command.includes("style") ||
+    command.includes("look")
+  ) {
+    return "visual";
+  }
+
+  if (
+    command.includes("market") ||
+    command.includes("launch") ||
+    command.includes("campaign") ||
+    command.includes("social") ||
+    command.includes("audience")
+  ) {
+    return "marketing";
+  }
+
+  if (
+    command.includes("music") ||
+    command.includes("sound") ||
+    command.includes("song") ||
+    command.includes("audio")
+  ) {
+    return "music";
+  }
+
+  if (
+    command.includes("world") ||
+    command.includes("setting") ||
+    command.includes("place") ||
+    command.includes("lore")
+  ) {
+    return "world";
+  }
+
+  if (
+    command.includes("story") ||
+    command.includes("scene") ||
+    command.includes("ending") ||
+    command.includes("trailer") ||
+    command.includes("plot")
+  ) {
+    return "story";
+  }
+
+  return "core";
+}
+
+function createCommandTitle(command: string) {
+  const trimmed = command.trim();
+
+  if (trimmed.length <= 32) return trimmed;
+
+  return `${trimmed.slice(0, 32)}...`;
+}
+
+function createCommandSubtitle(
+  command: string,
+  type: CanvasNodeType["type"]
+) {
+  const labels: Record<CanvasNodeType["type"], string> = {
+    core: "A user-directed creative refinement.",
+    story: "A narrative refinement that changes the arc, scene, or emotional direction.",
+    character:
+      "A character-focused refinement that adds personality, conflict, or relationship depth.",
+    visual:
+      "A visual refinement that changes the look, color, mood, or design language.",
+    marketing:
+      "A strategy refinement that improves audience fit, launch hook, or positioning.",
+    world:
+      "A world-building refinement that expands setting, rules, atmosphere, or lore.",
+    music:
+      "A sound-focused refinement that adds mood, rhythm, soundtrack, or audio identity.",
+  };
+
+  return `${labels[type]} Command: "${command}"`;
+}
+
+function getRandomPosition(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
