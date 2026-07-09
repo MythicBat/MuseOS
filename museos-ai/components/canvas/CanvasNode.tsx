@@ -40,6 +40,13 @@ export default function CanvasNode({ node, index, selected = false, onClick }: C
         left: `${node.x}%`,
         top: `${node.y}%`,
       }}
+      whileHover={{
+        scale: 1.05,
+        y: -4,
+      }}
+      whileTap={{
+        scale: 0.98,
+      }}
       onClick={onClick}
       className={`absolute w-56 -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-[28px] border p-5 shadow-2xl backdrop-blur-2xl transition
         ${selected ? "border-white/40 bg-white/[0.14]" : "border-white/10 bg-white/[0.08] hover:bg-white/[0.12]"}`}
