@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { AnimatePresence } from "framer-motion";
 
 import {
@@ -16,7 +16,7 @@ import OutputModal from "@/components/canvas/OutputModal";
 import CreativeDNAPanel from "@/components/canvas/CreativeDNAPanel";
 import Timeline from "@/components/canvas/Timeline";
 import NodeDetailPanel from "@/components/canvas/NodeDetailPanel";
-import CommandCore from "@/components/canvas/CommandCore";
+import CommandCore, { CommandCoreHandle } from "@/components/canvas/CommandCore";
 import { formatOutputName } from "@/lib/helpers";
 import { runCreativeCommand } from "@/lib/api";
 
@@ -40,6 +40,8 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [lastMouse, setLastMouse] = useState({ x: 0, y: 0 });
+
+  const commandCoreRef = useRef<CommandCoreHandle>(null);
 
   useEffect(() => {
     const timers: NodeJS.Timeout[] = [];
@@ -81,6 +83,50 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
       timers.forEach(clearTimeout);
     };
   }, [project]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+
+      const isTyping = 
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable;
+      
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        commandCoreRef.current?.focus();
+        return;
+      }
+
+      if (event.key === "Escape") {
+        setSelectedNode(null);
+        setSelectedOutput(null);
+        return;
+      }
+
+      if ((event.metaKey || event.ctrlKey) && event.key === "0") {
+        event.preventDefault();
+        setScale(1);
+        setOffset({ x: 0, y: 0 });
+        return;
+      }
+
+      if (isTyping) return;
+
+      if (event.key === "+" || event.key === "=") {
+        event.preventDefault();
+        setScale((current) => Math.min(1.6, current + 0.1));
+      }
+
+      if (event.key === "-" || event.key === "_") {
+        event.preventDefault();
+        setScale((current) => Math.max(0.65, current - 0.1));
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+  }, []);
 
   const expandNode = (node: CanvasNodeType) => {
     const alreadyExpanded = nodes.some((item) =>
@@ -195,10 +241,21 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
   };
 
   const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
-    if ((event.target as HTMLElement).closest("[data-canvas-node]")) return;
+    const target = event.target as HTMLElement;
+
+    if (
+      target.closest("[data-canvas-node]") ||
+      target.closest("button") ||
+      target.closest("input")
+    ) {
+      return;
+    }
 
     setIsDragging(true);
-    setLastMouse({ x: event.clientX, y: event.clientY });
+    setLastMouse({
+      x: event.clientX,
+      y: event.clientY,
+    });
   };
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -239,13 +296,27 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_40%)]" />
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/10 blur-[110px]" />
 
-        <CommandCore onCommand={runCommand} />
+        <CommandCore
+          ref={commandCoreRef}
+          onCommand={runCommand}
+        />
+
         <button
           onClick={resetCanvas}
-          className="absolute bottom-5 right-5 z-20 rounded-full border border-white/10 bg-black/40 px-4 py-2 text-xs text-white/60 backdrop-blur-xl transition hover:bg-white/10"
+          className="absolute bottom-5 right-5 z-30 rounded-full border border-white/10 bg-black/40 px-4 py-2 text-xs text-white/60 backdrop-blur-xl transition hover:bg-white/10"
         >
           Reset View · {Math.round(scale * 100)}%
         </button>
+
+        <div className="absolute bottom-5 left-5 z-30 hidden items-center gap-2 rounded-full border border-white/10 bg-black/40 px-4 py-2 text-xs text-white/40 backdrop-blur-xl md:flex">
+          <span>⌘K Command</span>
+          <span className="text-white/15">•</span>
+          <span>Scroll Zoom</span>
+          <span className="text-white/15">•</span>
+          <span>Drag Pan</span>
+          <span className="text-white/15">•</span>
+          <span>Esc Close</span>
+        </div>
 
         <div
           className="absolute inset-0 origin-center transition-transform duration-100"
