@@ -4,3 +4,5 @@ export { default as GradientText } from "./GradientText";
 export { default as FloatingOrb } from "./FloatingOrb";
 export { default as AnimatedGrid } from "./AnimatedGrid";
 export { default as CommandInput } from "./CommandInput";
+export { default as AmbientParticles } from "./AmbientParticles";
+export { default as MouseGlow } from "./MouseGlow";

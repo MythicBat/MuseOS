@@ -237,6 +237,7 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
         }`}
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_40%)]" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/10 blur-[110px]" />
 
         <CommandCore onCommand={runCommand} />
         <button
