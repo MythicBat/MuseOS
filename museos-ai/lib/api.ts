@@ -1,8 +1,13 @@
 import { CreativeProject } from "@/types/creative";
 
+export interface GeneratedProjectResult {
+  project: CreativeProject;
+  provider: "watsonx" | "fallback";
+}
+
 export async function generateProject(
   idea: string
-): Promise<CreativeProject> {
+): Promise<GeneratedProjectResult> {
   const response = await fetch("/api/generate", {
     method: "POST",
     headers: {
@@ -12,30 +17,22 @@ export async function generateProject(
   });
 
   if (!response.ok) {
-    throw new Error("Failed to generate project");
+    const body = (await response.json().catch(() => null)) as
+      | { error?: string }
+      | null;
+
+    throw new Error(body?.error || "Failed to generate project.");
   }
 
-  return response.json();
-}
+  const project = (await response.json()) as CreativeProject;
 
-export async function runCreativeCommand({
-  command,
-  projectTitle,
-}: {
-  command: string;
-  projectTitle: string;
-}) : Promise<{ title: string; subtitle: string }> {
-  const response = await fetch("/api/command", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ command, projectTitle }),
-  });
+  const provider =
+    response.headers.get("X-MuseOS-Provider") === "fallback"
+      ? "fallback"
+      : "watsonx";
 
-  if (!response.ok) {
-    throw new Error("Failed to run creative command.");
-  }
-
-  return response.json();
+  return {
+    project,
+    provider,
+  };
 }

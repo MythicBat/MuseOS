@@ -1,50 +1,113 @@
 import { NextResponse } from "next/server";
-import { CreativeProject } from "@/types/creative";
-import { buildCreativePrompt } from "@/lib/prompts";
+
 import { createFallbackProject } from "@/lib/fallbackProject";
+import { parseCreativeProject } from "@/lib/creativeProjectParser";
+import { buildCreativePrompt } from "@/lib/prompts";
+import {
+  getWatsonxClient,
+  getWatsonxModelId,
+  getWatsonxProjectId,
+  isWatsonxConfigured,
+} from "@/lib/watsonx";
+import { CreativeProject } from "@/types/creative";
 
-export async function POST(req: Request) {
+export const runtime = "nodejs";
+
+interface GenerateRequest {
+  idea?: unknown;
+}
+
+export async function POST(request: Request) {
+  let idea = "";
+
   try {
-    const { idea } = await req.json();
+    const body = (await request.json()) as GenerateRequest;
 
-    if (!idea || typeof idea !== "string") {
-      return NextResponse.json({ error: "Idea is required" }, { status: 400 });
+    if (typeof body.idea !== "string" || !body.idea.trim()) {
+      return NextResponse.json(
+        { error: "A creative idea is required." },
+        { status: 400 }
+      );
     }
 
-    const project = await generateWithAI(idea);
+    idea = body.idea.trim();
 
-    return NextResponse.json(project);
+    if (idea.length > 2000) {
+      return NextResponse.json(
+        { error: "Please keep the idea under 2,000 characters." },
+        { status: 400 }
+      );
+    }
+
+    const project = await generateCreativeUniverse(idea);
+
+    return NextResponse.json(project, {
+      headers: {
+        "X-MuseOS-Provider": isWatsonxConfigured()
+        ? "watsonx"
+        : "fallback",
+      },
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Creative-universe generation failed:", error);
+
+    if (idea) {
+      return NextResponse.json(createFallbackProject(idea), {
+        headers: {
+          "X-MuseOS-Provider": "fallback",
+        },
+      });
+    }
 
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: "MuseOS could not process this request." },
       { status: 500 }
     );
   }
 }
 
-async function generateWithAI(idea: string): Promise<CreativeProject> {
-  const apiKey = process.env.AI_API_KEY;
-
-  if (!apiKey) {
+async function generateCreativeUniverse(
+  idea: string
+): Promise<CreativeProject> {
+  if (!isWatsonxConfigured()) {
+    console.warn("watsonx.ai is not configured. Using fallback generation.");
     return createFallbackProject(idea);
   }
 
   try {
-    const prompt = buildCreativePrompt(idea);
+    const watsonx = getWatsonxClient();
 
-    /*
-      Later, we will replace this section with IBM Granite / watsonx.
+    const response = await watsonx.textChat({
+      modelId: getWatsonxModelId(),
+      projectId: getWatsonxProjectId(),
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are MuseOS. Return only a valid JSON object matching the user's requested schema.",
+        },
+        {
+          role: "user",
+          content: buildCreativePrompt(idea),
+        },
+      ],
+      maxTokens: 3000,
+      temperature: 0.65,
+    });
 
-      For now, fallback keeps the app stable.
-    */
+    const content = response.result.choices[0]?.message?.content;
 
-    console.log("AI prompt ready:", prompt.slice(0, 120));
+    if (typeof content !== "string" || !content.trim()) {
+      throw new Error("Granite returned an empty response.");
+    }
 
-    return createFallbackProject(idea);
+    return parseCreativeProject(content, idea);
   } catch (error) {
-    console.error("AI generation failed. Using fallback.", error);
+    console.error(
+      "Granite generation failed. Using MuseOS fallback:",
+      error
+    );
+
     return createFallbackProject(idea);
   }
 }
