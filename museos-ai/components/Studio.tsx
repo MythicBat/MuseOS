@@ -20,6 +20,7 @@ export default function Studio({ onBack }: StudioProps) {
   const [idea, setIdea] = useState("");
   const [project, setProject] = useState<CreativeProject | null>(null);
   const [loading, setLoading] = useState(false);
+  const [provider, setProvider] = useState<"watsonx" | "fallback" | null>(null);
 
   const handleGenerate = async () => {
     if (!idea.trim()) return;
@@ -28,8 +29,10 @@ export default function Studio({ onBack }: StudioProps) {
     setProject(null);
 
     try {
-      const generatedProject = await generateProject(idea);
-      setProject(generatedProject);
+      const result = await generateProject(idea);
+
+      setProject(result.project);
+      setProvider(result.provider);
     } catch (error) {
       console.error(error);
       alert("Failed to generate creative universe.");
@@ -83,6 +86,24 @@ export default function Studio({ onBack }: StudioProps) {
             {loading ? "Generating..." : "Generate Creative Universe"}
             <Sparkles className="h-4 w-4" />
           </button>
+
+          {provider && (
+            <div className="mt-4 flex items-center justify-between rounded-2xl border border-white/10 bg-black/25 px-4 py-3">
+              <span className="text-xs text-white/45">AI provider</span>
+
+              <span
+                className={`rounded-full px-3 py-1 text-xs ${
+                  provider === "watsonx"
+                    ? "bg-blue-400/15 text-blue-200"
+                    : "bg-amber-400/15 text-amber-200"
+                }`}
+              >
+                {provider === "watsonx"
+                  ? "IBM Granite · watsonx.ai"
+                  : "Reliable fallback mode"}
+              </span>
+            </div>
+          )}
 
           <div className="mt-6 rounded-3xl border border-white/10 bg-black/25 p-5">
             <p className="mb-3 text-sm font-medium text-white/80">

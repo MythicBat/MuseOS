@@ -5,6 +5,11 @@ export interface GeneratedProjectResult {
   provider: "watsonx" | "fallback";
 }
 
+export interface CreativeCommandResult {
+  title: string;
+  subtitle: string;
+}
+
 export async function generateProject(
   idea: string
 ): Promise<GeneratedProjectResult> {
@@ -35,4 +40,33 @@ export async function generateProject(
     project,
     provider,
   };
+}
+
+export async function runCreativeCommand({
+  command,
+  projectTitle,
+} : {
+  command: string;
+  projectTitle: string;
+}) : Promise<CreativeCommandResult> {
+  const response = await fetch("/api/command", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      command,
+      projectTitle,
+    }),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { error?: string }
+      |null;
+
+    throw new Error(body?.error || "Failed to run creative command.");
+  }
+
+  return (await response.json()) as CreativeCommandResult;
 }
