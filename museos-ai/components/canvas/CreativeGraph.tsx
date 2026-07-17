@@ -1,12 +1,20 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { AnimatePresence } from "framer-motion";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+import { AnimatePresence, motion } from "framer-motion";
 
 import {
-  CreativeProject,
-  CanvasNode as CanvasNodeType,
   CanvasEdge,
+  CanvasNode as CanvasNodeType,
+  CreativeProject,
+  OrchestraStage,
 } from "@/types/creative";
 
 import CanvasNode from "@/components/canvas/CanvasNode";
@@ -16,25 +24,39 @@ import OutputModal from "@/components/canvas/OutputModal";
 import CreativeDNAPanel from "@/components/canvas/CreativeDNAPanel";
 import Timeline from "@/components/canvas/Timeline";
 import NodeDetailPanel from "@/components/canvas/NodeDetailPanel";
-import CommandCore, { CommandCoreHandle } from "@/components/canvas/CommandCore";
+import CommandCore, {
+  CommandCoreHandle,
+} from "@/components/canvas/CommandCore";
+
 import { formatOutputName } from "@/lib/helpers";
 import { runCreativeCommand } from "@/lib/api";
+import { useCreativeOrchestra } from "@/hooks/useCreativeOrchestra";
 
 interface CreativeGraphProps {
   project: CreativeProject;
 }
 
-export default function CreativeGraph({ project }: CreativeGraphProps) {
+export default function CreativeGraph({
+  project,
+}: CreativeGraphProps) {
   const [selectedOutput, setSelectedOutput] = useState<{
     title: string;
     content: string;
   } | null>(null);
 
-  const [selectedNode, setSelectedNode] = useState<CanvasNodeType | null>(null);
-  const [nodes, setNodes] = useState<CanvasNodeType[]>([]);
-  const [edges, setEdges] = useState<CanvasEdge[]>([]);
-  const [visibleNodes, setVisibleNodes] = useState<CanvasNodeType[]>([]);
-  const [visibleEdges, setVisibleEdges] = useState<CanvasEdge[]>([]);
+  const [selectedNode, setSelectedNode] =
+    useState<CanvasNodeType | null>(null);
+
+  const [nodes, setNodes] = useState<CanvasNodeType[]>(
+    project.nodes
+  );
+
+  const [edges, setEdges] = useState<CanvasEdge[]>(
+    project.edges
+  );
+
+  const [manuallyVisibleNodeIds, setManuallyVisibleNodeIds] =
+    useState<string[]>([]);
 
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -43,57 +65,102 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
 
   const commandCoreRef = useRef<CommandCoreHandle>(null);
 
-  useEffect(() => {
-    const timers: NodeJS.Timeout[] = [];
+  const handleStageChange = useCallback(
+    (
+      stage: OrchestraStage,
+      stageVisibleNodeIds: string[]
+    ) => {
+      const latestNodeId =
+        stage.nodeIds.find((id) =>
+          stageVisibleNodeIds.includes(id)
+        ) ?? stage.nodeIds.at(-1);
 
+      if (!latestNodeId) return;
+
+      const targetNode = project.nodes.find(
+        (node) => node.id === latestNodeId
+      );
+
+      if (!targetNode) return;
+
+      setScale((current) =>
+        stage.type === "complete" ? 1 : Math.max(current, 1.04)
+      );
+
+      setOffset({
+        x: (50 - targetNode.x) * 4,
+        y: (48 - targetNode.y) * 3,
+      });
+    },
+    [project.nodes]
+  );
+
+  const {
+    orchestra,
+    currentStage,
+    visibleNodeIds: orchestraVisibleNodeIds,
+    visibleDebate,
+    isRunning,
+    isComplete,
+  } = useCreativeOrchestra({
+    project,
+    autoStart: true,
+    onStageChange: handleStageChange,
+    onComplete: () => {
+      setScale(1);
+      setOffset({ x: 0, y: 0 });
+    },
+  });
+
+  useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedNode(null);
-    setVisibleNodes([]);
-    setVisibleEdges([]);
+    setSelectedOutput(null);
     setNodes(project.nodes);
     setEdges(project.edges);
-
-    project.nodes.forEach((node, index) => {
-      const timer = setTimeout(() => {
-        setVisibleNodes((current) =>
-          current.some((item) => item.id === node.id)
-            ? current
-            : [...current, node]
-        );
-      }, index * 350);
-
-      timers.push(timer);
-    });
-
-    project.edges.forEach((edge, index) => {
-      const timer = setTimeout(() => {
-        setVisibleEdges((current) =>
-          current.some(
-            (item) => item.from === edge.from && item.to === edge.to
-          )
-            ? current
-            : [...current, edge]
-        );
-      }, 500 + index * 350);
-
-      timers.push(timer);
-    });
-
-    return () => {
-      timers.forEach(clearTimeout);
-    };
+    setManuallyVisibleNodeIds([]);
+    setScale(1);
+    setOffset({ x: 0, y: 0 });
   }, [project]);
+
+  const allVisibleNodeIds = useMemo(
+    () =>
+      new Set([
+        ...orchestraVisibleNodeIds,
+        ...manuallyVisibleNodeIds,
+      ]),
+    [manuallyVisibleNodeIds, orchestraVisibleNodeIds]
+  );
+
+  const visibleNodes = useMemo(
+    () =>
+      nodes.filter((node) => allVisibleNodeIds.has(node.id)),
+    [allVisibleNodeIds, nodes]
+  );
+
+  const visibleEdges = useMemo(
+    () =>
+      edges.filter(
+        (edge) =>
+          allVisibleNodeIds.has(edge.from) &&
+          allVisibleNodeIds.has(edge.to)
+      ),
+    [allVisibleNodeIds, edges]
+  );
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
 
-      const isTyping = 
+      const isTyping =
         target.tagName === "INPUT" ||
         target.tagName === "TEXTAREA" ||
         target.isContentEditable;
-      
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        event.key.toLowerCase() === "k"
+      ) {
         event.preventDefault();
         commandCoreRef.current?.focus();
         return;
@@ -105,7 +172,10 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
         return;
       }
 
-      if ((event.metaKey || event.ctrlKey) && event.key === "0") {
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        event.key === "0"
+      ) {
         event.preventDefault();
         setScale(1);
         setOffset({ x: 0, y: 0 });
@@ -116,17 +186,33 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
 
       if (event.key === "+" || event.key === "=") {
         event.preventDefault();
-        setScale((current) => Math.min(1.6, current + 0.1));
+        setScale((current) =>
+          Math.min(1.6, current + 0.1)
+        );
       }
 
       if (event.key === "-" || event.key === "_") {
         event.preventDefault();
-        setScale((current) => Math.max(0.65, current - 0.1));
+        setScale((current) =>
+          Math.max(0.65, current - 0.1)
+        );
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
+
+  const revealManualNodes = (
+    nodeIds: string[]
+  ) => {
+    setManuallyVisibleNodeIds((current) => [
+      ...new Set([...current, ...nodeIds]),
+    ]);
+  };
 
   const expandNode = (node: CanvasNodeType) => {
     const alreadyExpanded = nodes.some((item) =>
@@ -154,40 +240,28 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
       },
     ];
 
-    const childEdges: CanvasEdge[] = childNodes.map((child) => ({
-      from: node.id,
-      to: child.id,
-    }));
+    const childEdges: CanvasEdge[] = childNodes.map(
+      (child) => ({
+        from: node.id,
+        to: child.id,
+      })
+    );
 
     setNodes((current) => [...current, ...childNodes]);
     setEdges((current) => [...current, ...childEdges]);
 
     childNodes.forEach((child, index) => {
       setTimeout(() => {
-        setVisibleNodes((current) =>
-          current.some((item) => item.id === child.id)
-            ? current
-            : [...current, child]
-        );
-      }, index * 250);
-    });
-
-    childEdges.forEach((edge, index) => {
-      setTimeout(() => {
-        setVisibleEdges((current) =>
-          current.some(
-            (item) => item.from === edge.from && item.to === edge.to
-          )
-            ? current
-            : [...current, edge]
-        );
-      }, 200 + index * 250);
+        revealManualNodes([child.id]);
+      }, index * 260);
     });
   };
 
   const runCommand = async (command: string) => {
-    const lowerCommand = command.toLowerCase();
-    const nodeType = getCommandNodeType(lowerCommand);
+    const nodeType = getCommandNodeType(
+      command.toLowerCase()
+    );
+
     const nodeId = `command-${Date.now()}`;
 
     const optimisticNode: CanvasNodeType = {
@@ -196,18 +270,31 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
       subtitle: "MuseOS is refining this branch...",
       type: nodeType,
       x: getRandomPosition(25, 75),
-      y: getRandomPosition(18, 88),
+      y: getRandomPosition(25, 82),
     };
 
+    const coreNode =
+      nodes.find((node) => node.type === "core") ??
+      nodes[0];
+
     const commandEdge: CanvasEdge = {
-      from: "core",
+      from: coreNode?.id ?? "core",
       to: optimisticNode.id,
     };
 
     setNodes((current) => [...current, optimisticNode]);
     setEdges((current) => [...current, commandEdge]);
-    setVisibleNodes((current) => [...current, optimisticNode]);
-    setVisibleEdges((current) => [...current, commandEdge]);
+
+    revealManualNodes([
+      commandEdge.from,
+      optimisticNode.id,
+    ]);
+
+    setScale(1.08);
+    setOffset({
+      x: (50 - optimisticNode.x) * 4,
+      y: (48 - optimisticNode.y) * 3,
+    });
 
     try {
       const result = await runCreativeCommand({
@@ -221,17 +308,35 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
         subtitle: result.subtitle,
       };
 
-      setNodes((current) => 
-        current.map((node) => (node.id === nodeId ? updatedNode : node)));
+      setNodes((current) =>
+        current.map((node) =>
+          node.id === nodeId ? updatedNode : node
+        )
+      );
 
-      setVisibleNodes((current) =>
-        current.map((node) => (node.id === nodeId ? updatedNode : node)));
+      setSelectedNode((current) =>
+        current?.id === nodeId ? updatedNode : current
+      );
     } catch (error) {
       console.error(error);
+
+      setNodes((current) =>
+        current.map((node) =>
+          node.id === nodeId
+            ? {
+                ...node,
+                subtitle:
+                  "MuseOS could not complete this refinement. Try again.",
+              }
+            : node
+        )
+      );
     }
   };
 
-  const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+  const handleWheel = (
+    event: React.WheelEvent<HTMLDivElement>
+  ) => {
     event.preventDefault();
 
     setScale((current) => {
@@ -240,7 +345,9 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
     });
   };
 
-  const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = (
+    event: React.MouseEvent<HTMLDivElement>
+  ) => {
     const target = event.target as HTMLElement;
 
     if (
@@ -258,7 +365,9 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
     });
   };
 
-  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = (
+    event: React.MouseEvent<HTMLDivElement>
+  ) => {
     if (!isDragging) return;
 
     const dx = event.clientX - lastMouse.x;
@@ -269,7 +378,10 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
       y: current.y + dy,
     }));
 
-    setLastMouse({ x: event.clientX, y: event.clientY });
+    setLastMouse({
+      x: event.clientX,
+      y: event.clientY,
+    });
   };
 
   const handleMouseUp = () => {
@@ -283,23 +395,52 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
 
   return (
     <div>
-      <div 
+      <div
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         className={`relative min-h-[680px] overflow-hidden rounded-[2.5rem] border border-white/15 bg-white/[0.04] p-5 backdrop-blur-2xl ${
-          isDragging ? "cursor-grabbing" : "cursor-grab"
+          isDragging
+            ? "cursor-grabbing"
+            : "cursor-grab"
         }`}
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_40%)]" />
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/10 blur-[110px]" />
+
+        <motion.div
+          animate={{
+            opacity: isRunning ? [0.2, 0.45, 0.2] : 0.2,
+            scale: isRunning ? [0.9, 1.1, 0.9] : 1,
+          }}
+          transition={{
+            duration: 3,
+            repeat: isRunning
+              ? Number.POSITIVE_INFINITY
+              : 0,
+          }}
+          className="pointer-events-none absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/20 blur-[110px]"
+        />
 
         <CommandCore
           ref={commandCoreRef}
           onCommand={runCommand}
         />
+
+        <AnimatePresence>
+          {!isComplete && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="absolute left-1/2 top-[88px] z-30 -translate-x-1/2 rounded-full border border-white/10 bg-black/55 px-4 py-2 text-xs text-white/65 backdrop-blur-xl"
+            >
+              <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-violet-300" />
+              {currentStage.label}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <button
           onClick={resetCanvas}
@@ -319,7 +460,7 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
         </div>
 
         <div
-          className="absolute inset-0 origin-center transition-transform duration-100"
+          className="absolute inset-0 origin-center transition-transform duration-700 ease-out"
           style={{
             transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
           }}
@@ -327,7 +468,7 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
           <svg className="pointer-events-none absolute inset-0 h-full w-full">
             {visibleEdges.map((edge, index) => (
               <ConnectionLine
-                key={`${edge.from}-${edge.to}-${index}`}
+                key={`${edge.from}-${edge.to}`}
                 edge={edge}
                 nodes={visibleNodes}
                 index={index}
@@ -350,14 +491,23 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
               <NodeDetailPanel
                 node={selectedNode}
                 onClose={() => setSelectedNode(null)}
-                onExpand={() => expandNode(selectedNode)}
+                onExpand={() =>
+                  expandNode(selectedNode)
+                }
               />
             )}
           </AnimatePresence>
         </div>
       </div>
 
-      <AgentDock agents={project.agents} />
+      <AgentDock
+        agents={project.agents}
+        activities={orchestra.activities}
+        debate={visibleDebate}
+        currentStage={currentStage}
+        isComplete={isComplete}
+      />
+
       <CreativeDNAPanel dna={project.dna} />
       <Timeline />
 
@@ -367,20 +517,22 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
         </p>
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {Object.entries(project.outputs).map(([key, value]) => (
-            <button
-              key={key}
-              onClick={() =>
-                setSelectedOutput({
-                  title: formatOutputName(key),
-                  content: value,
-                })
-              }
-              className="rounded-2xl border border-white/10 bg-black/25 px-4 py-4 text-left text-sm text-white/70 transition hover:bg-white/10"
-            >
-              {formatOutputName(key)}
-            </button>
-          ))}
+          {Object.entries(project.outputs).map(
+            ([key, value]) => (
+              <button
+                key={key}
+                onClick={() =>
+                  setSelectedOutput({
+                    title: formatOutputName(key),
+                    content: value,
+                  })
+                }
+                className="rounded-2xl border border-white/10 bg-black/25 px-4 py-4 text-left text-sm text-white/70 transition hover:bg-white/10"
+              >
+                {formatOutputName(key)}
+              </button>
+            )
+          )}
         </div>
       </div>
 
@@ -395,7 +547,9 @@ export default function CreativeGraph({ project }: CreativeGraphProps) {
   );
 }
 
-function getCommandNodeType(command: string): CanvasNodeType["type"] {
+function getCommandNodeType(
+  command: string
+): CanvasNodeType["type"] {
   if (
     command.includes("character") ||
     command.includes("villain") ||
@@ -459,33 +613,13 @@ function getCommandNodeType(command: string): CanvasNodeType["type"] {
 function createCommandTitle(command: string) {
   const trimmed = command.trim();
 
-  if (trimmed.length <= 32) return trimmed;
-
-  return `${trimmed.slice(0, 32)}...`;
-}
-
-function createCommandSubtitle(
-  command: string,
-  type: CanvasNodeType["type"]
-) {
-  const labels: Record<CanvasNodeType["type"], string> = {
-    core: "A user-directed creative refinement.",
-    story: "A narrative refinement that changes the arc, scene, or emotional direction.",
-    character:
-      "A character-focused refinement that adds personality, conflict, or relationship depth.",
-    visual:
-      "A visual refinement that changes the look, color, mood, or design language.",
-    marketing:
-      "A strategy refinement that improves audience fit, launch hook, or positioning.",
-    world:
-      "A world-building refinement that expands setting, rules, atmosphere, or lore.",
-    music:
-      "A sound-focused refinement that adds mood, rhythm, soundtrack, or audio identity.",
-  };
-
-  return `${labels[type]} Command: "${command}"`;
+  return trimmed.length <= 32
+    ? trimmed
+    : `${trimmed.slice(0, 32)}...`;
 }
 
 function getRandomPosition(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return Math.floor(
+    Math.random() * (max - min + 1) + min
+  );
 }
