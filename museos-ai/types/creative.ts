@@ -1,3 +1,62 @@
+export type AgentRole = 
+  | "writer"
+  | "art-director"
+  | "producer"
+  | "marketing-strategist";
+
+export type AgentActivityStatus = 
+  | "waiting"
+  | "thinking"
+  | "speaking"
+  | "complete"
+  | "error"
+
+export type OrchestraStageType = 
+  | "initializing"
+  | "narrative"
+  | "visual-direction"
+  | "production"
+  | "marketing"
+  | "debate"
+  | "synthesis"
+  | "complete"
+
+export interface AgentActivity {
+  id: string;
+  agentId: AgentRole;
+  status: AgentActivityStatus;
+  message: string;
+  timestamp: number;
+  relatedNodeIds?: string[];
+}
+
+export interface AgentDebateMessage {
+  id: string;
+  agentId: AgentRole;
+  content: string;
+  replyToId?: string;
+  stance?: "proposal" | "support" | "challenge" | "resolution";
+  timestamp: number;
+}
+
+export interface OrchestraStage {
+  id: string;
+  type: OrchestraStageType;
+  label: string;
+  description: string;
+  agentId?: AgentRole;
+  nodeIds: string[];
+  duration: number;
+}
+
+export interface CreativeOrchestra {
+  status: "idle" | "running" | "complete" | "error";
+  currentStageIndex: number;
+  stages: OrchestraStage[];
+  activities: AgentActivity[];
+  debate: AgentDebateMessage[];
+}
+
 export interface DNA {
   genre: string;
   tone: string;
