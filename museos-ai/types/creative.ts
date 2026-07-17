@@ -57,6 +57,33 @@ export interface CreativeOrchestra {
   debate: AgentDebateMessage[];
 }
 
+export type CreativeVersionSource = 
+  | "generation"
+  | "command"
+  | "node-expansion"
+  | "restore";
+
+export interface CreativeVersion {
+  id: string;
+  label: string;
+  description: string;
+  createdAt: number;
+  source: CreativeVersionSource;
+  command?: string;
+  parentVersionId?: string;
+  branchId: string;
+  project: CreativeProject;
+}
+
+export interface CreativeBranch {
+  id: string;
+  name: string;
+  createdAt: number;
+  parentBranchId?: string;
+  originVersionId: string;
+  headVersionId: string;
+}
+
 export interface DNA {
   genre: string;
   tone: string;
