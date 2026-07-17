@@ -21,6 +21,7 @@ export default function Studio({ onBack }: StudioProps) {
   const [project, setProject] = useState<CreativeProject | null>(null);
   const [loading, setLoading] = useState(false);
   const [provider, setProvider] = useState<"watsonx" | "fallback" | null>(null);
+  const [projectGeneration, setProjectGeneration] = useState(0);
 
   const handleGenerate = async () => {
     if (!idea.trim()) return;
@@ -33,6 +34,7 @@ export default function Studio({ onBack }: StudioProps) {
 
       setProject(result.project);
       setProvider(result.provider);
+      setProjectGeneration((current) => current + 1);
     } catch (error) {
       console.error(error);
       alert("Failed to generate creative universe.");
@@ -120,7 +122,7 @@ export default function Studio({ onBack }: StudioProps) {
           {loading ? (
             <LoadingCanvas />
           ) : project ? (
-            <CreativeGraph project={project} />
+            <CreativeGraph key={projectGeneration} project={project} />
           ) : (
             <EmptyCanvas />
           )}
