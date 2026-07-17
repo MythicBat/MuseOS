@@ -1,44 +1,57 @@
-"server-only";
+import "server-only";
 
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
+import { IamAuthenticator } from "ibm-cloud-sdk-core";
 
-let watsonxClient: WatsonXAI | null = null;
+let cachedClient: WatsonXAI | null = null;
 
-function requireEnvironmentVariable(name: string): string {
-    const value = process.env[name];
+function requireEnv(name: string): string {
+  const value = process.env[name]?.trim();
 
-    if (!value) {
-        throw new Error(`Missing required environment variable: ${name}`);
-    }
+  if (!value) {
+    throw new Error(`Missing environment variable: ${name}`);
+  }
 
-    return value;
+  return value;
 }
 
 export function isWatsonxConfigured(): boolean {
-    return Boolean(
-        process.env.WATSONX_AI_APIKEY &&
-            process.env.WATSONX_AI_PROJECT_ID &&
-            process.env.WATSONX_AI_URL
-    );
+  return Boolean(
+    process.env.WATSONX_AI_APIKEY?.trim() &&
+      process.env.WATSONX_AI_PROJECT_ID?.trim() &&
+      process.env.WATSONX_AI_URL?.trim()
+  );
 }
 
 export function getWatsonxProjectId(): string {
-    return requireEnvironmentVariable("WATSONX_AI_PROJECT_ID");
+  return requireEnv("WATSONX_AI_PROJECT_ID");
 }
 
 export function getWatsonxModelId(): string {
-    return process.env.WATSONX_AI_MODEL_ID || "ibm/granite-4-h-small";
+  return (
+    process.env.WATSONX_AI_MODEL_ID?.trim() ||
+    "ibm/granite-4-h-small"
+  );
+}
+
+export function getWatsonxServiceUrl(): string {
+  const rawUrl = requireEnv("WATSONX_AI_URL");
+
+  return rawUrl.replace(/\/+$/, "");
 }
 
 export function getWatsonxClient(): WatsonXAI {
-    if (watsonxClient) {
-        return watsonxClient;
-    }
+  if (cachedClient) {
+    return cachedClient;
+  }
 
-    watsonxClient = new WatsonXAI({
-        version: "2024-05-31",
-        serviceUrl: requireEnvironmentVariable("WATSONX_AI_URL"),
-    });
+  cachedClient = new WatsonXAI({
+    version: "2024-05-31",
+    serviceUrl: getWatsonxServiceUrl(),
+    authenticator: new IamAuthenticator({
+      apikey: requireEnv("WATSONX_AI_APIKEY"),
+    }),
+  });
 
-    return watsonxClient;
+  return cachedClient;
 }

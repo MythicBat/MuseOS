@@ -77,6 +77,13 @@ async function generateCreativeUniverse(
   try {
     const watsonx = getWatsonxClient();
 
+    console.log("MuseOS watsonx configuration:", {
+      url: process.env.WATSONX_AI_URL,
+      modelId: process.env.WATSONX_AI_MODEL_ID,
+      projectIdStart: process.env.WATSONX_AI_PROJECT_ID?.slice(0, 8),
+      apiKeyLoaded: Boolean(process.env.WATSONX_AI_APIKEY),
+    });
+
     const response = await watsonx.textChat({
       modelId: getWatsonxModelId(),
       projectId: getWatsonxProjectId(),
