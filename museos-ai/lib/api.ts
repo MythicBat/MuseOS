@@ -1,4 +1,4 @@
-import { CreativeProject } from "@/types/creative";
+import { CreativeProject, DNA } from "@/types/creative";
 
 export interface GeneratedProjectResult {
   project: CreativeProject;
@@ -8,6 +8,7 @@ export interface GeneratedProjectResult {
 export interface CreativeCommandResult {
   title: string;
   subtitle: string;
+  dnaPatch?: Partial<DNA>;
 }
 
 export async function generateProject(
