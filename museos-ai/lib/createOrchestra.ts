@@ -85,7 +85,7 @@ export function createOrchestra(
 
   const stages: OrchestraStage[] = [
     {
-      id: "initialising",
+      id: "initializing",
       type: "initializing",
       label: "MuseOS is waking up",
       description: "Connecting the creative intelligence layer.",
