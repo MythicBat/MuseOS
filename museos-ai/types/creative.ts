@@ -97,8 +97,8 @@ export interface CreativeVersionComparison {
   fromVersion: CreativeVersion;
   toVersion: CreativeVersion;
   dnaDifferences: DNADifference[];
-  addedNotes: CanvasNode[];
-  removedNotes: CanvasNode[];
+  addedNodes: CanvasNode[];
+  removedNodes: CanvasNode[];
   changedNodes: Array<{
     before: CanvasNode;
     after:CanvasNode;
