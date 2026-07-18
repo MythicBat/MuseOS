@@ -14,6 +14,7 @@ import {
   CanvasEdge,
   CanvasNode as CanvasNodeType,
   CreativeProject,
+  CreativeVersionComparison,
   OrchestraStage,
 } from "@/types/creative";
 
@@ -27,6 +28,7 @@ import NodeDetailPanel from "@/components/canvas/NodeDetailPanel";
 import CommandCore, {
   CommandCoreHandle,
 } from "@/components/canvas/CommandCore";
+import VersionCompareModal from "@/components/canvas/VersionCompareModal";
 
 import { formatOutputName } from "@/lib/helpers";
 import { runCreativeCommand } from "@/lib/api";
@@ -86,11 +88,14 @@ export default function CreativeGraph({
   const commandCoreRef =
     useRef<CommandCoreHandle>(null);
 
+  const [versionComparison, setVersionComparison] = useState<CreativeVersionComparison | null>(null);
+
   /*
    * Creative history
    */
 
   const {
+    versions,
     branches,
     activeVersionId,
     activeVersionIndex,
@@ -101,8 +106,15 @@ export default function CreativeGraph({
     restoreVersion,
     createBranch,
     switchBranch,
+    renameBranch,
+    deleteBranch,
+    toggleVersionApproval,
+    updateVersionNote,
+    compareVersions,
+    clearStoredHistory,
   } = useCreativeHistory({
     initialProject: project,
+    storageKey: `museos-history-${project.title}`,
   });
 
   /*
@@ -375,6 +387,56 @@ export default function CreativeGraph({
       }
     },
     [applyHistoricalProject, switchBranch]
+  );
+
+  const handleRenameBranch = useCallback(
+    (branchId: string, name: string) => {
+      renameBranch(branchId, name);
+    },
+    [renameBranch]
+  );
+
+  const handleDeleteBranch = useCallback(
+    (branchId: string) => {
+      const nextProject = 
+        deleteBranch(branchId);
+
+      if (nextProject) {
+        applyHistoricalProject(nextProject);
+      }
+    },
+    [applyHistoricalProject, deleteBranch]
+  );
+
+  const handleCompareVersions =
+  useCallback(
+    (
+      firstVersionId: string,
+      secondVersionId: string
+    ) => {
+      const comparison =
+        compareVersions(
+          firstVersionId,
+          secondVersionId
+        );
+
+      if (comparison) {
+        setVersionComparison(
+          comparison
+        );
+      }
+    },
+    [compareVersions]
+  );
+
+  const handleClearHistory = useCallback(
+    () => {
+      const initialSnapshot = 
+        clearStoredHistory();
+
+      applyHistoricalProject(initialSnapshot);
+    },
+    [applyHistoricalProject, clearStoredHistory,]
   );
 
   /*
@@ -832,6 +894,7 @@ export default function CreativeGraph({
 
       <Timeline
         versions={branchVersions}
+        allVersions={versions}
         branches={branches}
         activeVersionId={activeVersionId}
         activeVersionIndex={
@@ -849,6 +912,24 @@ export default function CreativeGraph({
         }
         onSwitchBranch={
           handleSwitchBranch
+        }
+        onRenameBranch={
+          handleRenameBranch
+        }
+        onDeleteBranch={
+          handleDeleteBranch
+        }
+        onToggleApproval={
+          toggleVersionApproval
+        }
+        onUpdateNote={
+          updateVersionNote
+        }
+        onCompare={
+          handleCompareVersions
+        }
+        onClearHistory={
+          handleClearHistory
         }
       />
 
@@ -886,6 +967,13 @@ export default function CreativeGraph({
           onClose={() =>
             setSelectedOutput(null)
           }
+        />
+      )}
+
+      {versionComparison && (
+        <VersionCompareModal
+          comparison={versionComparison}
+          onClose={() => setVersionComparison(null)}
         />
       )}
     </div>
