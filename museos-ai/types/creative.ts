@@ -73,6 +73,9 @@ export interface CreativeVersion {
   parentVersionId?: string;
   branchId: string;
   project: CreativeProject;
+
+  approved?: boolean;
+  note?: string;
 }
 
 export interface CreativeBranch {
@@ -82,6 +85,24 @@ export interface CreativeBranch {
   parentBranchId?: string;
   originVersionId: string;
   headVersionId: string;
+}
+
+export interface DNADifference {
+  field: keyof DNA;
+  before: string | string[];
+  after: string | string[];
+}
+
+export interface CreativeVersionComparison {
+  fromVersion: CreativeVersion;
+  toVersion: CreativeVersion;
+  dnaDifferences: DNADifference[];
+  addedNotes: CanvasNode[];
+  removedNotes: CanvasNode[];
+  changedNodes: Array<{
+    before: CanvasNode;
+    after:CanvasNode;
+  }>;
 }
 
 export interface DNA {
