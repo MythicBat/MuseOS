@@ -30,10 +30,13 @@ import {
 import {
   CreativeProject,
   GeneratedProductionOutput,
+  PitchDeckOutputData,
   ProductionOutputType,
 } from "@/types/creative";
 
 import { generateProductionOutput } from "@/lib/api";
+import StoryboardStudio from "@/components/canvas/StoryboardStudio";
+import PitchDeckStudio from "@/components/canvas/PitchDeckStudio";
 
 interface ProductionWorkspaceProps {
   project: CreativeProject;
@@ -248,6 +251,22 @@ ${activeOutput.content}
     URL.revokeObjectURL(url);
   };
 
+  const updatePitchDeck = (
+    nextDeck: PitchDeckOutputData
+  ) => {
+    if(!activeOutput) return;
+
+    const nextContent = pitchDeckToText(nextDeck);
+
+    setGeneratedOutputs((current) => 
+      current.map((output) => 
+        output.id === activeOutput.id ? {
+          ...output,
+          content: nextContent,
+          structuredData: nextDeck,
+        } : output));
+  };
+
   return (
     <div className="mt-5 overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-2xl">
       <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -449,14 +468,56 @@ ${activeOutput.content}
               </div>
             </div>
 
-            <div className="max-h-[620px] overflow-y-auto p-6">
-              <div className="whitespace-pre-wrap text-sm leading-7 text-white/65">
-                {activeOutput.content}
-              </div>
+            <div className="max-h-[760px] overflow-y-auto p-6">
+              {activeOutput.structuredData?.format === 
+                "storyboard" ? (
+                  <StoryboardStudio
+                    storyboard={activeOutput.structuredData}
+                  />
+                ) : activeOutput.structuredData?.format === 
+                  "pitch-deck" ? (
+                    <PitchDeckStudio
+                      key={activeOutput.id}
+                      deck={activeOutput.structuredData}
+                      onChange={updatePitchDeck}
+                    />
+                  ) : (
+                    <div className="whitespace-pre-wrap text-sm leading-7 text-white/65">
+                      {activeOutput.content}
+                    </div>
+                  )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
   );
+}
+
+function pitchDeckToText(
+  deck: PitchDeckOutputData
+): string {
+  const slides = deck.slides
+    .map(
+      (slide) => `SLIDE ${slide.slideNumber}: ${slide.title}
+
+${slide.headline}
+
+${slide.supportingPoints
+  .map((point) => `- ${point}`)
+  .join("\n")}
+
+Visual direction:
+${slide.visualDirection}
+
+Speaker notes:
+${slide.speakerNotes}`
+    )
+    .join("\n\n---\n\n");
+
+  return `${deck.deckTitle}
+
+${deck.deckSubtitle}
+
+${slides}`;
 }
