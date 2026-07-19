@@ -1,3 +1,8 @@
+import {
+  CreativeProject,
+  ProductionOutputType,
+} from "@/types/creative";
+
 export function buildCreativePrompt(idea: string): string {
   return `
 You are MuseOS, an expert AI creative director and creative systems architect.
@@ -145,4 +150,203 @@ function escapePromptText(value: string): string {
     .replaceAll("\\", "\\\\")
     .replaceAll('"', '\\"')
     .replaceAll("\n", " ");
+}
+
+const outputInstructions: Record<
+  ProductionOutputType,
+  string
+> = {
+  "pitch-deck": `
+Create a polished 10-slide pitch deck outline.
+
+For every slide include:
+- Slide number
+- Slide title
+- Main message
+- 3 concise supporting points
+- Suggested visual direction
+
+Cover:
+1. Title and hook
+2. Problem or opportunity
+3. Creative concept
+4. Story and world
+5. Audience
+6. Differentiation
+7. Experience or production approach
+8. Marketing strategy
+9. Roadmap
+10. Final vision and call to action
+`,
+
+  storyboard: `
+Create a cinematic 8-scene storyboard.
+
+For every scene include:
+- Scene number and title
+- Location and time
+- Visual composition
+- Character action
+- Dialogue or sound
+- Emotional purpose
+- Camera direction
+- Image-generation prompt
+
+Ensure the scenes form a coherent narrative arc.
+`,
+
+  "creative-bible": `
+Create a professional creative bible.
+
+Include:
+- Core premise
+- Creative vision
+- Themes
+- World rules
+- Main characters
+- Character relationships
+- Visual language
+- Colour and material language
+- Sound and music identity
+- Signature moments
+- Audience experience
+- Creative guardrails
+`,
+
+  "production-plan": `
+Create a realistic production plan.
+
+Include:
+- Scope
+- Deliverables
+- Production phases
+- Team roles
+- 12-week timeline
+- Tools and technology
+- Key dependencies
+- Major risks and mitigations
+- Prototype strategy
+- Success criteria
+- Indicative budget categories
+
+Keep it ambitious but suitable for a small creative technology team.
+`,
+
+  "marketing-plan": `
+Create a complete marketing and launch plan.
+
+Include:
+- Positioning
+- Target segments
+- Core audience insight
+- Campaign proposition
+- Messaging pillars
+- Launch phases
+- Content strategy
+- Partnerships
+- Community strategy
+- Distribution channels
+- Success metrics
+- Three signature campaign activations
+`,
+
+  "investor-brief": `
+Create a concise investor and stakeholder brief.
+
+Include:
+- Executive summary
+- Opportunity
+- Product or experience
+- Audience and market
+- Unique differentiation
+- Business or impact model
+- Go-to-market strategy
+- Development roadmap
+- Key risks
+- Funding or partnership use
+- Closing investment thesis
+`,
+
+  "social-campaign": `
+Create a launch-ready social media campaign.
+
+Include:
+- Campaign name
+- Central hook
+- Audience
+- Tone of voice
+- Three campaign phases
+- Six post concepts
+- Two short-form video concepts
+- Community activation
+- Hashtag direction
+- Calls to action
+- Success metrics
+`,
+
+  "project-brief": `
+Create a detailed professional project brief.
+
+Include:
+- Project overview
+- Background
+- Objective
+- Audience
+- Creative proposition
+- Scope
+- Deliverables
+- Functional requirements
+- Creative requirements
+- Timeline
+- Stakeholders
+- Constraints
+- Success criteria
+`,
+};
+
+export function buildProductionOutputPrompt({
+  outputType,
+  project,
+  branchName,
+  versionLabel,
+}: {
+  outputType: ProductionOutputType;
+  project: CreativeProject;
+  branchName?: string;
+  versionLabel?: string;
+}): string {
+  const instruction = outputInstructions[outputType];
+
+  return `
+You are MuseOS, an expert creative director, producer and creative strategist.
+
+Create a professional production deliverable from the supplied creative universe.
+
+OUTPUT TYPE:
+${outputType}
+
+ACTIVE BRANCH:
+${branchName || "Main"}
+
+ACTIVE VERSION:
+${versionLabel || "Current version"}
+
+PROJECT:
+${JSON.stringify(project, null, 2)}
+
+INSTRUCTIONS:
+${instruction}
+
+Quality requirements:
+- Use the exact project details rather than generic advice.
+- Preserve the project's title, creative DNA, characters, world and audience.
+- Make every recommendation concrete and actionable.
+- Use clear professional headings.
+- Use concise paragraphs and readable bullet points.
+- Do not mention that you are an AI.
+- Do not include JSON.
+- Do not use Markdown code fences.
+- Do not invent copyrighted franchise comparisons.
+- Return only the finished deliverable.
+`.trim();
 }
