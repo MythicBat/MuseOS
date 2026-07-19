@@ -131,6 +131,28 @@ export interface Outputs {
   projectBrief: string;
 }
 
+export type ProductionOutputType =
+  | "pitch-deck"
+  | "storyboard"
+  | "creative-bible"
+  | "production-plan"
+  | "marketing-plan"
+  | "investor-brief"
+  | "social-campaign"
+  | "project-brief";
+
+export interface GeneratedProductionOutput {
+  id: string;
+  type: ProductionOutputType;
+  title: string;
+  content: string;
+  generatedAt: number;
+  provider: "watsonx" | "fallback";
+  projectTitle: string;
+  versionId?: string;
+  branchName?: string;
+}
+
 export interface CanvasNode {
   id: string;
   title: string;
