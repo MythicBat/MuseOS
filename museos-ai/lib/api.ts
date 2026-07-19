@@ -1,4 +1,4 @@
-import { CreativeProject, DNA } from "@/types/creative";
+import { CreativeProject, DNA, GeneratedProductionOutput, ProductionOutputType } from "@/types/creative";
 
 export interface GeneratedProjectResult {
   project: CreativeProject;
@@ -9,6 +9,46 @@ export interface CreativeCommandResult {
   title: string;
   subtitle: string;
   dnaPatch?: Partial<DNA>;
+}
+
+interface GenerateProductionOutputOptions {
+  outputType: ProductionOutputType;
+  project: CreativeProject;
+  versionId?: string;
+  versionLabel?: string;
+  branchName?: string;
+}
+
+export async function generateProductionOutput({
+  outputType,
+  project,
+  versionId,
+  versionLabel,
+  branchName,
+}: GenerateProductionOutputOptions) : Promise<GeneratedProductionOutput> {
+  const response = await fetch("/api/output", {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "application/json",
+    },
+
+    body: JSON.stringify({
+      outputType,
+      project,
+      versionId,
+      versionLabel,
+      branchName,
+    }),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as | { error?: string } | null;
+
+    throw new Error(body?.error || "Failed to generate production output.");
+  }
+
+  return (await response.json()) as GeneratedProductionOutput;
 }
 
 export async function generateProject(
