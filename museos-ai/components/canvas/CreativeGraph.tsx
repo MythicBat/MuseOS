@@ -21,7 +21,6 @@ import {
 import CanvasNode from "@/components/canvas/CanvasNode";
 import ConnectionLine from "@/components/canvas/ConnectionLine";
 import AgentDock from "@/components/canvas/AgentDock";
-import OutputModal from "@/components/canvas/OutputModal";
 import CreativeDNAPanel from "@/components/canvas/CreativeDNAPanel";
 import Timeline from "@/components/canvas/Timeline";
 import NodeDetailPanel from "@/components/canvas/NodeDetailPanel";
@@ -29,8 +28,8 @@ import CommandCore, {
   CommandCoreHandle,
 } from "@/components/canvas/CommandCore";
 import VersionCompareModal from "@/components/canvas/VersionCompareModal";
+import ProductionWorkspace from "@/components/canvas/ProductionWorkspace";
 
-import { formatOutputName } from "@/lib/helpers";
 import { runCreativeCommand } from "@/lib/api";
 import { cloneCreativeProject } from "@/lib/creativeVersion";
 
@@ -44,10 +43,6 @@ interface CreativeGraphProps {
 export default function CreativeGraph({
   project,
 }: CreativeGraphProps) {
-  const [selectedOutput, setSelectedOutput] = useState<{
-    title: string;
-    content: string;
-  } | null>(null);
 
   const [selectedNode, setSelectedNode] =
     useState<CanvasNodeType | null>(null);
@@ -97,8 +92,10 @@ export default function CreativeGraph({
   const {
     versions,
     branches,
+    activeVersion,
     activeVersionId,
     activeVersionIndex,
+    activeBranch,
     activeBranchId,
     branchVersions,
     addVersion,
@@ -239,7 +236,6 @@ export default function CreativeGraph({
 
       if (event.key === "Escape") {
         setSelectedNode(null);
-        setSelectedOutput(null);
         return;
       }
 
@@ -320,8 +316,6 @@ export default function CreativeGraph({
       );
 
       setSelectedNode(null);
-      setSelectedOutput(null);
-
       setScale(1);
       setOffset({ x: 0, y: 0 });
     },
@@ -933,42 +927,12 @@ export default function CreativeGraph({
         }
       />
 
-      <div className="mt-5 rounded-[32px] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-2xl">
-        <p className="mb-4 text-sm font-medium text-white/80">
-          One-Click Creative Outputs
-        </p>
-
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {Object.entries(
-            liveProject.outputs
-          ).map(([key, value]) => (
-            <button
-              type="button"
-              key={key}
-              onClick={() =>
-                setSelectedOutput({
-                  title:
-                    formatOutputName(key),
-                  content: value,
-                })
-              }
-              className="rounded-2xl border border-white/10 bg-black/25 px-4 py-4 text-left text-sm text-white/70 transition hover:bg-white/10"
-            >
-              {formatOutputName(key)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {selectedOutput && (
-        <OutputModal
-          title={selectedOutput.title}
-          content={selectedOutput.content}
-          onClose={() =>
-            setSelectedOutput(null)
-          }
-        />
-      )}
+      <ProductionWorkspace
+        project={liveProject}
+        versionId={activeVersionId}
+        versionLabel={activeVersion?.label}
+        branchName={activeBranch?.name}
+      />
 
       {versionComparison && (
         <VersionCompareModal
