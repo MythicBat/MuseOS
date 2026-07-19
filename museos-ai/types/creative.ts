@@ -131,6 +131,49 @@ export interface Outputs {
   projectBrief: string;
 }
 
+export interface StoryboardScene {
+  id: string;
+  sceneNumber: number;
+  title: string;
+  location: string;
+  time: string;
+  shotType: string;
+  visualComposition: string;
+  action: string;
+  dialogueOrSound: string;
+  emotionalPurpose: string;
+  cameraDirection: string;
+  imagePrompt: string;
+}
+
+export interface StoryboardOutputData {
+  format: "storyboard";
+  logline: string;
+  visualApproach: string;
+  scenes: StoryboardScene[];
+}
+
+export interface PitchDeckSlide {
+  id: string;
+  slideNumber: number;
+  title: string;
+  headline: string;
+  supportingPoints: string[];
+  visualDirection: string;
+  speakerNotes: string;
+}
+
+export interface PitchDeckOutputData {
+  format: "pitch-deck";
+  deckTitle: string;
+  deckSubtitle: string;
+  slides: PitchDeckSlide[];
+}
+
+export type StructuredProductionOutput = 
+  | StoryboardOutputData
+  | PitchDeckOutputData;
+
 export type ProductionOutputType =
   | "pitch-deck"
   | "storyboard"
@@ -146,6 +189,7 @@ export interface GeneratedProductionOutput {
   type: ProductionOutputType;
   title: string;
   content: string;
+  structuredData?: StructuredProductionOutput;
   generatedAt: number;
   provider: "watsonx" | "fallback";
   projectTitle: string;
