@@ -152,6 +152,15 @@ function escapePromptText(value: string): string {
     .replaceAll("\n", " ");
 }
 
+function isStructuredOutputType(
+  outputType: ProductionOutputType
+) : outputType is "pitch-deck" | "storyboard" {
+  return (
+    outputType === "pitch-deck" ||
+    outputType === "storyboard"
+  );
+}
+
 const outputInstructions: Record<
   ProductionOutputType,
   string
@@ -315,6 +324,15 @@ export function buildProductionOutputPrompt({
   branchName?: string;
   versionLabel?: string;
 }): string {
+  if (isStructuredOutputType(outputType)) {
+    return buildStructuredProductionPrompt({
+      outputType,
+      project,
+      branchName,
+      versionLabel,
+    });
+  }
+
   const instruction = outputInstructions[outputType];
 
   return `
@@ -348,5 +366,134 @@ Quality requirements:
 - Do not use Markdown code fences.
 - Do not invent copyrighted franchise comparisons.
 - Return only the finished deliverable.
+`.trim();
+}
+
+function buildStructuredProductionPrompt({
+  outputType,
+  project,
+  branchName,
+  versionLabel,
+}: {
+  outputType: "pitch-deck" | "storyboard";
+  project: CreativeProject;
+  branchName?: string;
+  versionLabel?: string;
+}): string {
+  const context = `
+ACTIVE BRANCH:
+${branchName || "Main"}
+
+ACTIVE VERSION:
+${versionLabel || "Current version"}
+
+PROJECT:
+${JSON.stringify(project, null, 2)}
+`;
+
+  if (outputType === "storyboard") {
+    return `
+You are MuseOS, a senior film director, storyboard artist and visual storyteller.
+
+Create an eight-scene cinematic storyboard from the supplied creative universe.
+
+${context}
+
+Return exactly one valid JSON object.
+Do not use Markdown.
+Do not use code fences.
+Do not add commentary before or after the JSON.
+
+Use this exact structure:
+
+{
+  "format": "storyboard",
+  "logline": "A concise one-sentence narrative logline",
+  "visualApproach": "A concise description of the cinematic and visual approach",
+  "scenes": [
+    {
+      "id": "scene-1",
+      "sceneNumber": 1,
+      "title": "Concise scene title",
+      "location": "Specific location",
+      "time": "Time of day or story time",
+      "shotType": "Specific shot type",
+      "visualComposition": "Detailed visual framing and composition",
+      "action": "What happens in the scene",
+      "dialogueOrSound": "Dialogue, sound design or music cue",
+      "emotionalPurpose": "The emotional and narrative purpose",
+      "cameraDirection": "Camera movement and lens direction",
+      "imagePrompt": "A standalone cinematic image-generation prompt"
+    }
+  ]
+}
+
+Rules:
+- Return exactly eight scenes.
+- Number scenes from 1 to 8.
+- Use IDs scene-1 through scene-8.
+- Create a complete narrative progression.
+- Each scene must clearly reflect the supplied project.
+- Keep each individual field concise but specific.
+- The image prompt must work without additional context.
+- Do not reference copyrighted artists, films or franchises.
+`.trim();
+  }
+
+  return `
+You are MuseOS, a senior creative director, pitch strategist and presentation designer.
+
+Create a polished ten-slide pitch deck from the supplied creative universe.
+
+${context}
+
+Return exactly one valid JSON object.
+Do not use Markdown.
+Do not use code fences.
+Do not add commentary before or after the JSON.
+
+Use this exact structure:
+
+{
+  "format": "pitch-deck",
+  "deckTitle": "The project or presentation title",
+  "deckSubtitle": "A concise and compelling subtitle",
+  "slides": [
+    {
+      "id": "slide-1",
+      "slideNumber": 1,
+      "title": "Concise slide title",
+      "headline": "The primary message of this slide",
+      "supportingPoints": [
+        "Specific supporting point",
+        "Specific supporting point",
+        "Specific supporting point"
+      ],
+      "visualDirection": "Suggested layout, imagery, chart or visual treatment",
+      "speakerNotes": "Concise notes explaining how to present this slide"
+    }
+  ]
+}
+
+Required slide progression:
+1. Title and hook
+2. Problem or opportunity
+3. Core creative concept
+4. Story and world
+5. Target audience
+6. Unique differentiation
+7. Experience and production model
+8. Marketing and distribution
+9. Roadmap and success measures
+10. Closing vision and call to action
+
+Rules:
+- Return exactly ten slides.
+- Number slides from 1 to 10.
+- Use IDs slide-1 through slide-10.
+- Give every slide exactly three supporting points.
+- Keep slide text presentation-ready.
+- Make visual directions distinctive and achievable.
+- Do not reference copyrighted artists, brands or franchises.
 `.trim();
 }
