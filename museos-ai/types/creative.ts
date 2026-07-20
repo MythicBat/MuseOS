@@ -194,6 +194,7 @@ export interface GeneratedProductionOutput {
   provider: "watsonx" | "fallback";
   projectTitle: string;
   versionId?: string;
+  versionLabel?: string;
   branchName?: string;
 }
 

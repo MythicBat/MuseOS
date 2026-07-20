@@ -164,6 +164,7 @@ export async function POST(request: Request) {
       provider,
       projectTitle: project.title,
       versionId,
+      versionLabel,
       branchName,
     };
 

@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  useMemo,
   useState,
 } from "react";
 
@@ -29,7 +28,6 @@ import {
 
 import {
   CreativeProject,
-  GeneratedProductionOutput,
   PitchDeckOutputData,
   ProductionOutputType,
 } from "@/types/creative";
@@ -37,6 +35,7 @@ import {
 import { generateProductionOutput } from "@/lib/api";
 import StoryboardStudio from "@/components/canvas/StoryboardStudio";
 import PitchDeckStudio from "@/components/canvas/PitchDeckStudio";
+import { useProductionHistory } from "@/hooks/useProductionHistory";
 
 interface ProductionWorkspaceProps {
   project: CreativeProject;
@@ -131,16 +130,28 @@ export default function ProductionWorkspace({
   versionLabel,
   branchName,
 }: ProductionWorkspaceProps) {
+
+  const productionStorageKey = `museos-production-${createStorageSlug(project.title)}`;
+
+  const {
+    outputs: generatedOutputs,
+    activeOutput,
+    activeOutputId,
+    setActiveOutputId,
+    saveOutput,
+    updateOutput,
+    renameOutput,
+    duplicateOutput,
+    deleteOutput,
+    clearOutputs,
+  } = useProductionHistory({
+    storageKey: productionStorageKey,
+  });
+
   const [selectedType, setSelectedType] =
     useState<ProductionOutputType | null>(
       null
     );
-
-  const [generatedOutputs, setGeneratedOutputs] =
-    useState<GeneratedProductionOutput[]>([]);
-
-  const [activeOutputId, setActiveOutputId] =
-    useState<string | null>(null);
 
   const [loadingType, setLoadingType] =
     useState<ProductionOutputType | null>(
@@ -152,15 +163,6 @@ export default function ProductionWorkspace({
 
   const [copied, setCopied] =
     useState(false);
-
-  const activeOutput = useMemo(
-    () =>
-      generatedOutputs.find(
-        (output) =>
-          output.id === activeOutputId
-      ) ?? null,
-    [activeOutputId, generatedOutputs]
-  );
 
   const generateOutput = async (
     type: ProductionOutputType
@@ -179,12 +181,8 @@ export default function ProductionWorkspace({
           branchName,
         });
 
-      setGeneratedOutputs((current) => [
-        output,
-        ...current,
-      ]);
+        saveOutput(output);
 
-      setActiveOutputId(output.id);
     } catch (generationError) {
       const message =
         generationError instanceof Error
@@ -258,13 +256,10 @@ ${activeOutput.content}
 
     const nextContent = pitchDeckToText(nextDeck);
 
-    setGeneratedOutputs((current) => 
-      current.map((output) => 
-        output.id === activeOutput.id ? {
-          ...output,
-          content: nextContent,
-          structuredData: nextDeck,
-        } : output));
+    updateOutput(activeOutput.id, {
+      content: nextContent,
+      structuredData: nextDeck,
+    });
   };
 
   return (
@@ -492,6 +487,17 @@ ${activeOutput.content}
       </AnimatePresence>
     </div>
   );
+}
+
+function createStorageSlug(
+  value: string
+): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
 }
 
 function pitchDeckToText(
