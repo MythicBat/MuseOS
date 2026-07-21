@@ -23,6 +23,10 @@ import {
   Trash2,
   Sparkles,
   X,
+  ChevronDown,
+  FileJson,
+  FileText,
+  FileType2,
 } from "lucide-react";
 
 import {
@@ -40,6 +44,7 @@ import { generateProductionOutput } from "@/lib/api";
 import StoryboardStudio from "@/components/canvas/StoryboardStudio";
 import PitchDeckStudio from "@/components/canvas/PitchDeckStudio";
 import { useProductionHistory } from "@/hooks/useProductionHistory";
+import { exportProductionOutput, ProductionExportFormat } from "@/lib/exportProductionOutput";
 
 interface ProductionWorkspaceProps {
   project: CreativeProject;
@@ -157,6 +162,10 @@ export default function ProductionWorkspace({
     storageKey: productionStorageKey,
   });
 
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [exportingFormat, setExportingFormat] = useState<ProductionExportFormat | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+
   const [selectedType, setSelectedType] =
     useState<ProductionOutputType | null>(
       null
@@ -218,44 +227,25 @@ export default function ProductionWorkspace({
     }, 1600);
   };
 
-  const downloadMarkdown = () => {
+  const handleExport = async(format: ProductionExportFormat) => {
     if (!activeOutput) return;
 
-    const safeTitle =
-      activeOutput.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "");
+    setExportingFormat(format);
+    setExportError(null);
+    setExportMenuOpen(false);
 
-    const fileContent = `# ${activeOutput.title}
+    try {
+      await exportProductionOutput(
+        activeOutput,
+        format
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to export this asset.";
 
-Project: ${activeOutput.projectTitle}
-Branch: ${activeOutput.branchName || "Main"}
-Generated: ${new Date(
-      activeOutput.generatedAt
-    ).toLocaleString()}
-
-${activeOutput.content}
-`;
-
-    const blob = new Blob([fileContent], {
-      type: "text/markdown;charset=utf-8",
-    });
-
-    const url =
-      URL.createObjectURL(blob);
-
-    const anchor =
-      document.createElement("a");
-
-    anchor.href = url;
-    anchor.download = `${safeTitle || "museos-output"}.md`;
-
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-
-    URL.revokeObjectURL(url);
+      setExportError(message);
+    } finally {
+      setExportingFormat(null);
+    }
   };
 
   const updatePitchDeck = (
@@ -535,26 +525,81 @@ ${activeOutput.content}
                   {copied ? "Copied" : "Copy"}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={downloadMarkdown}
-                  className="flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-medium text-black"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  Markdown
-                </button>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setExportMenuOpen((current) => !current)}
+                    disabled={Boolean(exportingFormat)}
+                    className="flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-medium text-black disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {exportingFormat ? (
+                      <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Download className="h-3.5 w-3.5" />
+                    )}
+
+                    {exportingFormat ? "Exporting" : "Export"}
+
+                    <ChevronDown className="h-3 w-3" />
+                  </button>
+
+                  <AnimatePresence>
+                    {exportMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.96, y: -4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.96, y: -4 }}
+                        className="absolute right-0 top-11 z-30 w-48 overflow-hidden rounded-2xl border border-white/10 bg-[#1b1925] p-1.5 shadow-2xl"
+                      >
+                        <ExportMenuButton
+                          icon={<FileText className="h-3.5 w-3.5" />}
+                          label="Markdown"
+                          onClick={() => handleExport("markdown")}
+                        />
+
+                        <ExportMenuButton
+                          icon={<FileJson className="h-3.5 w-3.5" />}
+                          label="JSON"
+                          onClick={() => handleExport("json")}
+                        />
+
+                        <ExportMenuButton
+                          icon={<FileType2 className="h-3.5 w-3.5" />}
+                          label="PDF document"
+                          onClick={() => handleExport("pdf")}
+                        />
+
+                        {activeOutput.structuredData?.format === "pitch-deck" && (
+                          <ExportMenuButton
+                            icon={<Presentation className="h-3.5 w-3.5" />}
+                            label="PowerPoint"
+                            onClick={() => handleExport("powerpoint")}
+                          />
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setActiveOutputId(null)
-                  }
+                  onClick={() => {
+                    setActiveOutputId(null);
+                    setExportMenuOpen(false);
+                    setExportError(null);
+                  }}
                   className="rounded-full border border-white/10 bg-white/5 p-2 text-white/40 hover:bg-white/10"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
+            
+            {exportError && (
+              <div className="border-b border-red-300/10 bg-red-400[0.06] px-5 py-3 text-xs text-red-200/65">
+                {exportError}
+              </div>
+            )}
 
             <div className="max-h-[760px] overflow-y-auto p-6">
               {activeOutput.structuredData?.format === 
@@ -909,6 +954,27 @@ ${activeOutput.content}
   )}
 </AnimatePresence>
     </div>
+  );
+}
+
+function ExportMenuButton({
+  icon,
+  label,
+  onClick,
+} : {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs text-white/55 transition hover:bg-white/10 hover:text-white/75"
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
 
