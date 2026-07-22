@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 
@@ -27,6 +27,7 @@ export default function Studio({ onBack, initialProject = null, initialProjectId
   const [idea, setIdea] = useState("");
   const [project, setProject] = useState<CreativeProject | null>(() => initialProject);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(() => initialProjectId);
+  const currentProjectIdRef = useRef<string | null>(initialProjectId);
   const [loading, setLoading] = useState(false);
   const [provider, setProvider] = useState<"watsonx" | "fallback" | null>(null);
   const [projectGeneration, setProjectGeneration] = useState(0);
@@ -42,10 +43,11 @@ export default function Studio({ onBack, initialProject = null, initialProjectId
 
       const savedProjectId = onSaveProject(result.project);
 
+      currentProjectIdRef.current = savedProjectId;
+
       setProject(result.project);
       setCurrentProjectId(savedProjectId);
       setProvider(result.provider);
-      setProjectGeneration((current) => current + 1);
 
     } catch (error) {
       console.error(error);
@@ -55,16 +57,32 @@ export default function Studio({ onBack, initialProject = null, initialProjectId
     }
   };
 
-  const handleProjectChange = (nextProject: CreativeProject) => {
-    setProject(nextProject);
+  const handleProjectChange =
+  useCallback(
+    (
+      nextProject: CreativeProject
+    ) => {
+      const savedProjectId =
+        onSaveProject(
+          nextProject,
+          currentProjectIdRef.current ??
+            undefined
+        );
 
-    const savedProjectId = onSaveProject(nextProject, currentProjectId ?? undefined);
+      if (
+        !currentProjectIdRef.current
+      ) {
+        currentProjectIdRef.current =
+          savedProjectId;
 
-    if (!currentProjectId) {
-      setCurrentProjectId(savedProjectId);
-    }
-  };
-
+        setCurrentProjectId(
+          savedProjectId
+        );
+      }
+    },
+    [onSaveProject]
+  );
+  
   return (
     <div className="relative z-10 mx-auto max-w-7xl px-6 py-8">
       <nav className="mb-10 flex items-center justify-between">
