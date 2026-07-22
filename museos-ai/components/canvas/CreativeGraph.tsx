@@ -167,6 +167,11 @@ export default function CreativeGraph({
     [project.nodes]
   );
 
+  const handleOrchestraComplete = useCallback(() => {
+    setScale(1);
+    setOffset({ x: 0, y: 0 });
+  },[]);
+
   const {
     orchestra,
     currentStage,
@@ -178,10 +183,7 @@ export default function CreativeGraph({
     project,
     autoStart: true,
     onStageChange: handleStageChange,
-    onComplete: () => {
-      setScale(1);
-      setOffset({ x: 0, y: 0 });
-    },
+    onComplete: handleOrchestraComplete,
   });
 
   /*
