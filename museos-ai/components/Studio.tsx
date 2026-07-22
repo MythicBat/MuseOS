@@ -14,11 +14,19 @@ import CreativeGraph from "@/components/canvas/CreativeGraph";
 
 interface StudioProps {
   onBack: () => void;
+  initialProject?: CreativeProject | null;
+  initialProjectId?: string | null;
+
+  onSaveProject: (
+    project: CreativeProject,
+    existingId?: string
+  ) => string;
 }
 
-export default function Studio({ onBack }: StudioProps) {
+export default function Studio({ onBack, initialProject = null, initialProjectId = null, onSaveProject }: StudioProps) {
   const [idea, setIdea] = useState("");
-  const [project, setProject] = useState<CreativeProject | null>(null);
+  const [project, setProject] = useState<CreativeProject | null>(() => initialProject);
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(() => initialProjectId);
   const [loading, setLoading] = useState(false);
   const [provider, setProvider] = useState<"watsonx" | "fallback" | null>(null);
   const [projectGeneration, setProjectGeneration] = useState(0);
@@ -32,14 +40,28 @@ export default function Studio({ onBack }: StudioProps) {
     try {
       const result = await generateProject(idea);
 
+      const savedProjectId = onSaveProject(result.project);
+
       setProject(result.project);
+      setCurrentProjectId(savedProjectId);
       setProvider(result.provider);
       setProjectGeneration((current) => current + 1);
+
     } catch (error) {
       console.error(error);
       alert("Failed to generate creative universe.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleProjectChange = (nextProject: CreativeProject) => {
+    setProject(nextProject);
+
+    const savedProjectId = onSaveProject(nextProject, currentProjectId ?? undefined);
+
+    if (!currentProjectId) {
+      setCurrentProjectId(savedProjectId);
     }
   };
 
@@ -52,7 +74,7 @@ export default function Studio({ onBack }: StudioProps) {
           onClick={onBack}
           className="rounded-full border border-white/15 bg-white/10 px-5 py-2 text-sm text-white/80 backdrop-blur-xl transition hover:bg-white/20"
         >
-          Back Home
+          Back to Projects
         </button>
       </nav>
 
@@ -122,7 +144,11 @@ export default function Studio({ onBack }: StudioProps) {
           {loading ? (
             <LoadingCanvas />
           ) : project ? (
-            <CreativeGraph key={projectGeneration} project={project} />
+            <CreativeGraph
+              key={`${currentProjectId ?? "new"}-${projectGeneration}`}
+              project={project}
+              onProjectChange={handleProjectChange}
+            />
           ) : (
             <EmptyCanvas />
           )}

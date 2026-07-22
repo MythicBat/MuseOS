@@ -38,10 +38,14 @@ import { useCreativeHistory } from "@/hooks/useCreativeHistory";
 
 interface CreativeGraphProps {
   project: CreativeProject;
+  onProjectChange?: (
+    project: CreativeProject
+  ) => void;
 }
 
 export default function CreativeGraph({
   project,
+  onProjectChange,
 }: CreativeGraphProps) {
 
   const [selectedNode, setSelectedNode] =
@@ -58,6 +62,16 @@ export default function CreativeGraph({
 
   const [edges, setEdges] = useState<CanvasEdge[]>(
     () => project.edges.map((edge) => ({ ...edge }))
+  );
+
+  const commitLiveProject = useCallback(
+    (nextProject: CreativeProject) => {
+      setLiveProject(nextProject);
+      setNodes(nextProject.nodes);
+      setEdges(nextProject.edges);
+      onProjectChange?.(nextProject);
+    },
+    [onProjectChange]
   );
 
   const [
@@ -306,10 +320,7 @@ export default function CreativeGraph({
       const nextProject =
         cloneCreativeProject(historicalProject);
 
-      setLiveProject(nextProject);
-      setNodes(nextProject.nodes);
-      setEdges(nextProject.edges);
-
+        commitLiveProject(nextProject);
       // History navigation should reveal the complete snapshot.
       setManuallyVisibleNodeIds(
         nextProject.nodes.map((node) => node.id)
@@ -319,7 +330,7 @@ export default function CreativeGraph({
       setScale(1);
       setOffset({ x: 0, y: 0 });
     },
-    []
+    [commitLiveProject]
   );
 
   /*
@@ -497,9 +508,7 @@ export default function CreativeGraph({
       edges: nextEdges,
     };
 
-    setNodes(nextNodes);
-    setEdges(nextEdges);
-    setLiveProject(nextProject);
+    commitLiveProject(nextProject);
 
     childNodes.forEach((child, index) => {
       window.setTimeout(() => {
@@ -616,9 +625,7 @@ export default function CreativeGraph({
         edges: optimisticEdges,
       };
 
-      setNodes(nextNodes);
-      setEdges(optimisticEdges);
-      setLiveProject(nextProject);
+      commitLiveProject(nextProject);
 
       addVersion({
         project: nextProject,

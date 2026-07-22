@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CreativeProject, SavedCreativeProject } from "@/types/creative";
+import { cloneCreativeProject } from "@/lib/creativeVersion";
 
 const STORAGE_KEY = "museos-saved-projects-v1";
 
@@ -107,7 +108,7 @@ export function useSavedProjects() {
                     {
                         id: projectId,
                         title: project.title || "Untitled project",
-                        project,
+                        project: cloneProjectForStorage(project),
                         createdAt: existing?.createdAt ?? now,
                         updatedAt: now,
                         lastOpenedAt: now,
@@ -186,7 +187,7 @@ export function useSavedProjects() {
                     ...source,
                     id: duplicateId,
                     title: `${source.title} Copy`,
-                    project: {...source.project, title: `${source.title} Copy`},
+                    project: cloneProjectForStorage(source.project, `${source.title} Copy`),
                     createdAt: now,
                     updatedAt: now,
                     lastOpenedAt: now,
@@ -235,4 +236,22 @@ export function useSavedProjects() {
         deleteProject,
         clearProjects
     };
+}
+
+function cloneProjectForStorage(
+  project: CreativeProject,
+  title?: string
+): CreativeProject {
+  const cloned =
+    typeof structuredClone ===
+    "function"
+      ? structuredClone(project)
+      : JSON.parse(
+          JSON.stringify(project)
+        ) as CreativeProject;
+
+  return {
+    ...cloned,
+    title: title ?? cloned.title,
+  };
 }
