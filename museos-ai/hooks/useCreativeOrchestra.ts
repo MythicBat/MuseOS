@@ -1,8 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { createOrchestra } from "@/lib/createOrchestra";
+
 import {
   AgentActivity,
   CreativeOrchestra,
@@ -13,10 +19,12 @@ import {
 interface UseCreativeOrchestraOptions {
   project: CreativeProject;
   autoStart?: boolean;
+
   onStageChange?: (
     stage: OrchestraStage,
     visibleNodeIds: string[]
   ) => void;
+
   onComplete?: () => void;
 }
 
@@ -26,44 +34,93 @@ export function useCreativeOrchestra({
   onStageChange,
   onComplete,
 }: UseCreativeOrchestraOptions) {
-  const initialOrchestra = useMemo(
-    () => createOrchestra(project),
-    [project]
-  );
-
   const [orchestra, setOrchestra] =
-    useState<CreativeOrchestra>(initialOrchestra);
+    useState<CreativeOrchestra>(() =>
+      createOrchestra(project)
+    );
 
-  const [visibleNodeIds, setVisibleNodeIds] = useState<string[]>([]);
-  const [visibleDebateCount, setVisibleDebateCount] = useState(0);
+  const [
+    visibleNodeIds,
+    setVisibleNodeIds,
+  ] = useState<string[]>([]);
 
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const [
+    visibleDebateCount,
+    setVisibleDebateCount,
+  ] = useState(0);
+
+  const timersRef = useRef<number[]>([]);
+
   const hasStartedRef = useRef(false);
 
+  const visibleNodeIdsRef =
+    useRef<string[]>([]);
+
+  const onStageChangeRef =
+    useRef(onStageChange);
+
+  const onCompleteRef =
+    useRef(onComplete);
+
+  /*
+   * Keep callback refs current without
+   * restarting the orchestra.
+   */
+
+  useEffect(() => {
+    onStageChangeRef.current =
+      onStageChange;
+  }, [onStageChange]);
+
+  useEffect(() => {
+    onCompleteRef.current =
+      onComplete;
+  }, [onComplete]);
+
   const clearTimers = useCallback(() => {
-    timersRef.current.forEach(clearTimeout);
+    timersRef.current.forEach(
+      (timer) => window.clearTimeout(timer)
+    );
+
     timersRef.current = [];
   }, []);
 
   const reset = useCallback(() => {
     clearTimers();
+
     hasStartedRef.current = false;
-    setOrchestra(createOrchestra(project));
+    visibleNodeIdsRef.current = [];
+
+    setOrchestra(
+      createOrchestra(project)
+    );
+
     setVisibleNodeIds([]);
     setVisibleDebateCount(0);
   }, [clearTimers, project]);
 
-  const addActivity = useCallback((activity: AgentActivity) => {
-    setOrchestra((current) => ({
-      ...current,
-      activities: [...current.activities, activity],
-    }));
-  }, []);
+  const addActivity = useCallback(
+    (activity: AgentActivity) => {
+      setOrchestra((current) => ({
+        ...current,
+        activities: [
+          ...current.activities,
+          activity,
+        ],
+      }));
+    },
+    []
+  );
 
   const runStage = useCallback(
     (stageIndex: number) => {
-      const currentOrchestra = createOrchestra(project);
-      const stage = currentOrchestra.stages[stageIndex];
+      const currentOrchestra =
+        createOrchestra(project);
+
+      const stage =
+        currentOrchestra.stages[
+          stageIndex
+        ];
 
       if (!stage) {
         setOrchestra((current) => ({
@@ -71,13 +128,16 @@ export function useCreativeOrchestra({
           status: "complete",
         }));
 
-        onComplete?.();
+        onCompleteRef.current?.();
         return;
       }
 
       setOrchestra((current) => ({
         ...current,
-        status: stage.type === "complete" ? "complete" : "running",
+        status:
+          stage.type === "complete"
+            ? "complete"
+            : "running",
         currentStageIndex: stageIndex,
       }));
 
@@ -88,67 +148,92 @@ export function useCreativeOrchestra({
           status: "thinking",
           message: stage.description,
           timestamp: Date.now(),
-          relatedNodeIds: stage.nodeIds,
+          relatedNodeIds:
+            stage.nodeIds,
         });
       }
 
-      const nodesToReveal = stage.nodeIds;
+      if (stage.nodeIds.length > 0) {
+        stage.nodeIds.forEach(
+          (nodeId, nodeIndex) => {
+            const timer =
+              window.setTimeout(() => {
+                setVisibleNodeIds(
+                  (current) => {
+                    const next =
+                      current.includes(
+                        nodeId
+                      )
+                        ? current
+                        : [
+                            ...current,
+                            nodeId,
+                          ];
 
-      if (nodesToReveal.length > 0) {
-        nodesToReveal.forEach((nodeId, nodeIndex) => {
-          const timer = setTimeout(() => {
-            setVisibleNodeIds((current) => {
-              const next = current.includes(nodeId)
-                ? current
-                : [...current, nodeId];
+                    visibleNodeIdsRef.current =
+                      next;
 
-              onStageChange?.(stage, next);
+                    onStageChangeRef.current?.(
+                      stage,
+                      next
+                    );
 
-              return next;
-            });
-          }, 250 + nodeIndex * 320);
+                    return next;
+                  }
+                );
+              }, 250 + nodeIndex * 320);
 
-          timersRef.current.push(timer);
-        });
+            timersRef.current.push(
+              timer
+            );
+          }
+        );
       } else {
-        onStageChange?.(stage, visibleNodeIds);
+        onStageChangeRef.current?.(
+          stage,
+          visibleNodeIdsRef.current
+        );
       }
 
       if (stage.type === "debate") {
-        currentOrchestra.debate.forEach((_, debateIndex) => {
-          const timer = setTimeout(() => {
-            setVisibleDebateCount(debateIndex + 1);
-          }, 250 + debateIndex * 400);
+        currentOrchestra.debate.forEach(
+          (_, debateIndex) => {
+            const timer =
+              window.setTimeout(() => {
+                setVisibleDebateCount(
+                  debateIndex + 1
+                );
+              }, 250 + debateIndex * 400);
 
-          timersRef.current.push(timer);
-        });
+            timersRef.current.push(
+              timer
+            );
+          }
+        );
       }
 
-      const completeAgentTimer = setTimeout(() => {
-        if (stage.agentId) {
-          addActivity({
-            id: `${stage.id}-complete-${Date.now()}`,
-            agentId: stage.agentId,
-            status: "complete",
-            message: `${stage.label} complete.`,
-            timestamp: Date.now(),
-            relatedNodeIds: stage.nodeIds,
-          });
-        }
+      const completeAgentTimer =
+        window.setTimeout(() => {
+          if (stage.agentId) {
+            addActivity({
+              id: `${stage.id}-complete-${Date.now()}`,
+              agentId: stage.agentId,
+              status: "complete",
+              message: `${stage.label} complete.`,
+              timestamp: Date.now(),
+              relatedNodeIds:
+                stage.nodeIds,
+            });
+          }
 
-        // eslint-disable-next-line react-hooks/immutability
-        runStage(stageIndex + 1);
-      }, stage.duration);
+          runStage(stageIndex + 1);
+        }, stage.duration);
 
-      timersRef.current.push(completeAgentTimer);
+      timersRef.current.push(
+        completeAgentTimer
+      );
     },
-    [
-      addActivity,
-      onComplete,
-      onStageChange,
-      project,
-      visibleNodeIds,
-    ]
+    [addActivity, project]
   );
 
   const start = useCallback(() => {
@@ -167,29 +252,59 @@ export function useCreativeOrchestra({
   }, [runStage]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    reset();
+    clearTimers();
+
+    hasStartedRef.current = false;
+    visibleNodeIdsRef.current = [];
+
+    setOrchestra(
+      createOrchestra(project)
+    );
+
+    setVisibleNodeIds([]);
+    setVisibleDebateCount(0);
 
     if (autoStart) {
-      const timer = setTimeout(start, 100);
+      const timer =
+        window.setTimeout(() => {
+          start();
+        }, 100);
+
       timersRef.current.push(timer);
     }
 
     return clearTimers;
-  }, [autoStart, clearTimers, project, reset, start]);
+  }, [
+    autoStart,
+    clearTimers,
+    project,
+    start,
+  ]);
 
   const currentStage =
-    orchestra.stages[orchestra.currentStageIndex] ??
-    orchestra.stages[0];
+    orchestra.stages[
+      orchestra.currentStageIndex
+    ] ?? orchestra.stages[0];
 
   return {
     orchestra,
     currentStage,
     visibleNodeIds,
-    visibleDebate: orchestra.debate.slice(0, visibleDebateCount),
+
+    visibleDebate:
+      orchestra.debate.slice(
+        0,
+        visibleDebateCount
+      ),
+
     start,
     reset,
-    isRunning: orchestra.status === "running",
-    isComplete: orchestra.status === "complete",
+
+    isRunning:
+      orchestra.status === "running",
+
+    isComplete:
+      orchestra.status ===
+      "complete",
   };
 }
