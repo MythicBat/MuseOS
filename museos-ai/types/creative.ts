@@ -198,6 +198,15 @@ export interface GeneratedProductionOutput {
   branchName?: string;
 }
 
+export interface SavedCreativeProject {
+  id: string;
+  title: string;
+  project: CreativeProject;
+  createdAt: number;
+  updatedAt: number;
+  lastOpenedAt: number;
+}
+
 export interface CanvasNode {
   id: string;
   title: string;
