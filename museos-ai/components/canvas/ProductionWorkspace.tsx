@@ -525,7 +525,7 @@ export default function ProductionWorkspace({
                   {copied ? "Copied" : "Copy"}
                 </button>
 
-                <div className="relative">
+                <div id= "workspace-exports" className="relative scroll-mt-24">
                   <button
                     type="button"
                     onClick={() => setExportMenuOpen((current) => !current)}
