@@ -41,11 +41,15 @@ interface CreativeGraphProps {
   onProjectChange?: (
     project: CreativeProject
   ) => void;
+  onCommandCoreReady?: (
+    focusCommandCore: () => void
+  ) => void;
 }
 
 export default function CreativeGraph({
   project,
   onProjectChange,
+  onCommandCoreReady,
 }: CreativeGraphProps) {
 
   const [selectedNode, setSelectedNode] =
@@ -96,6 +100,21 @@ export default function CreativeGraph({
 
   const commandCoreRef =
     useRef<CommandCoreHandle>(null);
+
+  useEffect(() => {
+    if (!onCommandCoreReady) { return; }
+
+    const focusCommandCore = () => {
+      commandCoreRef.current?.focus();
+
+      document.getElementById("workspace-canvas")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    };
+
+    onCommandCoreReady(focusCommandCore);
+  }, [onCommandCoreReady]);
 
   const [versionComparison, setVersionComparison] = useState<CreativeVersionComparison | null>(null);
 
@@ -243,6 +262,7 @@ export default function CreativeGraph({
 
       if (
         (event.metaKey || event.ctrlKey) &&
+        event.shiftKey &&
         event.key.toLowerCase() === "k"
       ) {
         event.preventDefault();
@@ -820,10 +840,11 @@ export default function CreativeGraph({
         </button>
 
         <div className="absolute bottom-5 left-5 z-30 hidden items-center gap-2 rounded-full border border-white/10 bg-black/40 px-4 py-2 text-xs text-white/40 backdrop-blur-xl md:flex">
-          <span>⌘K Command</span>
+          <span>⌘K Search</span>
           <span className="text-white/15">
             •
           </span>
+          <span>⇧⌘K Command</span>
           <span>Scroll Zoom</span>
           <span className="text-white/15">
             •

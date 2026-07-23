@@ -1,14 +1,18 @@
 "use client";
 
 import {
+  useCallback,
   useMemo,
   useState,
+  useEffect,
+  useRef,
 } from "react";
 
 import BackgroundGlow from "@/components/BackgroundGlow";
 import Hero from "@/components/Hero";
 import Studio from "@/components/Studio";
 import ProjectDashboard from "@/components/dashboard/ProjectDashboard";
+import MuseSpotlight from "@/components/workspace/MuseSpotlight";
 
 import {
   AmbientParticles,
@@ -30,6 +34,8 @@ export default function Home() {
     selectedProjectId,
     setSelectedProjectId,
   ] = useState<string | null>(null);
+
+  const [spotlightOpen, setSpotlightOpen] = useState(false);
 
   const {
     projects,
@@ -95,6 +101,49 @@ export default function Home() {
     }
   };
 
+  const focusCommandCoreRef = useRef<(() => void) | null>(null);
+
+  const handleCommandCoreReady = useCallback((focusCommandCore: () => void) => {
+    focusCommandCoreRef.current = focusCommandCore;
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+
+      const isTyping = 
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        Boolean(target?.isContentEditable);
+
+        if (
+          (event.metaKey || event.ctrlKey) &&
+          event.key.toLowerCase() === "k" &&
+          !event.shiftKey
+        ) {
+          event.preventDefault();
+
+          setSpotlightOpen((current) => !current);
+
+          return;
+        }
+
+        if (event.key === "Escape" && spotlightOpen) {
+          event.preventDefault();
+          setSpotlightOpen(false);
+          return;
+        }
+
+        if (isTyping) { return; }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [spotlightOpen]);
+
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-[#050510] text-white">
       <BackgroundGlow />
@@ -151,9 +200,21 @@ export default function Home() {
             onBack={
               handleBackToProjects
             }
+            onCommandReady={handleCommandCoreReady}
+            onProjectCreated={setSelectedProjectId}
           />
         )}
       </div>
+
+      <MuseSpotlight
+        open={spotlightOpen}
+        onClose={() => setSpotlightOpen(false)}
+        currentProject={selectedProject?.project ?? null}
+        savedProjects={projects}
+        onOpenDashboard={() => {setView("dashboard");}}
+        onOpenProject={handleOpenProject}
+        onFocusCommandCore={() => {focusCommandCoreRef.current?.();}}
+      />
     </main>
   );
 }

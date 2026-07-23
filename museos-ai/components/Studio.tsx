@@ -22,9 +22,13 @@ interface StudioProps {
     project: CreativeProject,
     existingId?: string
   ) => string;
+  onCommandReady?: (
+    focusCommandCore: () => void
+  ) => void;
+  onProjectCreated?: (projectId: string) => void;
 }
 
-export default function Studio({ onBack, initialProject = null, initialProjectId = null, onSaveProject }: StudioProps) {
+export default function Studio({ onBack, initialProject = null, initialProjectId = null, onSaveProject, onCommandReady, onProjectCreated }: StudioProps) {
   const [idea, setIdea] = useState("");
   const [project, setProject] = useState<CreativeProject | null>(() => initialProject);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(() => initialProjectId);
@@ -48,6 +52,7 @@ export default function Studio({ onBack, initialProject = null, initialProjectId
 
       setProject(result.project);
       setCurrentProjectId(savedProjectId);
+      onProjectCreated?.(savedProjectId);
       setProvider(result.provider);
 
     } catch (error) {
@@ -181,6 +186,7 @@ export default function Studio({ onBack, initialProject = null, initialProjectId
               key={`${currentProjectId ?? "new"}-${projectGeneration}`}
               project={project}
               onProjectChange={handleProjectChange}
+              onCommandCoreReady={onCommandReady}
             />
           ) : (
             <EmptyCanvas />
