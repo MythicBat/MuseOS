@@ -604,16 +604,26 @@ export default function ProductionWorkspace({
             <div className="max-h-[760px] overflow-y-auto p-6">
               {activeOutput.structuredData?.format === 
                 "storyboard" ? (
-                  <StoryboardStudio
-                    storyboard={activeOutput.structuredData}
-                  />
+                  <section
+                    id="workspace-storyboards"
+                    className="scroll-mt-6"
+                  >
+                    <StoryboardStudio
+                      storyboard={activeOutput.structuredData}
+                    />
+                  </section>
                 ) : activeOutput.structuredData?.format === 
                   "pitch-deck" ? (
-                    <PitchDeckStudio
-                      key={activeOutput.id}
-                      deck={activeOutput.structuredData}
-                      onChange={updatePitchDeck}
-                    />
+                    <section
+                      id="workspace-pitch-deck"
+                      className="scroll-mt-6"
+                    >
+                      <PitchDeckStudio
+                        key={activeOutput.id}
+                        deck={activeOutput.structuredData}
+                        onChange={updatePitchDeck}
+                      />
+                    </section>
                   ) : (
                     <div className="whitespace-pre-wrap text-sm leading-7 text-white/65">
                       {activeOutput.content}

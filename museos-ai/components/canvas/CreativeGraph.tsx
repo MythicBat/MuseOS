@@ -743,6 +743,10 @@ export default function CreativeGraph({
 
   return (
     <div>
+      <section
+        id="workspace-canvas"
+        className="scroll-mt-6"
+      >
       <div
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
@@ -881,67 +885,127 @@ export default function CreativeGraph({
           </AnimatePresence>
         </div>
       </div>
+      </section>
 
-      <AgentDock
-        agents={liveProject.agents}
-        activities={orchestra.activities}
-        debate={visibleDebate}
-        currentStage={currentStage}
-        isComplete={isComplete}
-      />
+      <section
+        id="workspace-agents"
+        className="scroll-mt-6"
+      >
+        <AgentDock
+          agents={liveProject.agents}
+          activities={orchestra.activities}
+          debate={visibleDebate}
+          currentStage={currentStage}
+          isComplete={isComplete}
+        />
+      </section>
 
-      <CreativeDNAPanel
-        dna={liveProject.dna}
-        versionId={activeVersionId}
-      />
+      <section
+        id="workspace-dna"
+        className="scroll-mt-6"
+      >
+        <CreativeDNAPanel
+          dna={liveProject.dna}
+          versionId={activeVersionId}
+        />
+      </section>
 
-      <Timeline
-        versions={branchVersions}
-        allVersions={versions}
-        branches={branches}
-        activeVersionId={activeVersionId}
-        activeVersionIndex={
-          activeVersionIndex
-        }
-        activeBranchId={activeBranchId}
-        onSelectVersion={
-          handleSelectVersion
-        }
-        onRestoreVersion={
-          handleRestoreVersion
-        }
-        onCreateBranch={
-          handleCreateBranch
-        }
-        onSwitchBranch={
-          handleSwitchBranch
-        }
-        onRenameBranch={
-          handleRenameBranch
-        }
-        onDeleteBranch={
-          handleDeleteBranch
-        }
-        onToggleApproval={
-          toggleVersionApproval
-        }
-        onUpdateNote={
-          updateVersionNote
-        }
-        onCompare={
-          handleCompareVersions
-        }
-        onClearHistory={
-          handleClearHistory
-        }
-      />
+      <section
+        id="workspace-versioning"
+        className="scroll-mt-6"
+      >
+        <Timeline
+          versions={branchVersions}
+          allVersions={versions}
+          branches={branches}
+          activeVersionId={activeVersionId}
+          activeVersionIndex={
+            activeVersionIndex
+          }
+          activeBranchId={activeBranchId}
+          onSelectVersion={
+            handleSelectVersion
+          }
+          onRestoreVersion={
+            handleRestoreVersion
+          }
+          onCreateBranch={
+            handleCreateBranch
+          }
+          onSwitchBranch={
+            handleSwitchBranch
+          }
+          onRenameBranch={
+            handleRenameBranch
+          }
+          onDeleteBranch={
+            handleDeleteBranch
+          }
+          onToggleApproval={
+            toggleVersionApproval
+          }
+          onUpdateNote={
+            updateVersionNote
+          }
+          onCompare={
+            handleCompareVersions
+          }
+          onClearHistory={
+            handleClearHistory
+          }
+        />
+      </section>
 
-      <ProductionWorkspace
-        project={liveProject}
-        versionId={activeVersionId}
-        versionLabel={activeVersion?.label}
-        branchName={activeBranch?.name}
-      />
+
+      <section
+        id="workspace-production"
+        className="scroll-mt-6"
+      >
+        <ProductionWorkspace
+          project={liveProject}
+          versionId={activeVersionId}
+          versionLabel={activeVersion?.label}
+          branchName={activeBranch?.name}
+        />
+      </section>
+
+      <section
+        id="workspace-settings"
+        className="scroll-mt-6">
+          <div className="mt-8 rounded-[30px] border border-white/10 bg-white[0.04] p-6 backdrop-blur-2xl">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-white/25">Universe settings</p>
+
+                <h2 className="mt-2 text-lg font-medium text-white/80">Workspace Intelligence</h2>
+
+                <p className="mt-2 max-w-xl text-sm leading-6 text-white/35">
+                  MuseOS is using IBM Granite,
+                  automatic version history and
+                  local project persistence for
+                  this universe.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <WorkspaceSettingBadge
+                  label="Granite"
+                  active
+                />
+
+                <WorkspaceSettingBadge
+                  label="Auto-save"
+                  active
+                />
+
+                <WorkspaceSettingBadge
+                  label="Version history"
+                  active
+                />
+              </div>
+            </div>
+          </div>
+      </section>
 
       {versionComparison && (
         <VersionCompareModal
@@ -949,6 +1013,30 @@ export default function CreativeGraph({
           onClose={() => setVersionComparison(null)}
         />
       )}
+    </div>
+  );
+}
+
+interface WorkspaceSettingBadgeProps {
+  label: string;
+  active?: boolean;
+}
+
+function WorkspaceSettingBadge({
+  label,
+  active = false,
+}: WorkspaceSettingBadgeProps) {
+  return (
+    <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] text-white/45">
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${
+          active
+            ? "bg-emerald-300"
+            : "bg-white/20"
+        }`}
+      />
+
+      {label}
     </div>
   );
 }

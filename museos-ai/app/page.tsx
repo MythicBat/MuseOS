@@ -96,7 +96,7 @@ export default function Home() {
   };
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#050510] text-white">
+    <main className="relative min-h-screen overflow-x-hidden bg-[#050510] text-white">
       <BackgroundGlow />
       <MouseGlow />
       <AmbientParticles />

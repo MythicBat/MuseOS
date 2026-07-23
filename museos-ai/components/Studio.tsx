@@ -11,6 +11,7 @@ import CreativeCanvas from "@/components/CreativeCanvas";
 import { generateProject } from "@/lib/api";
 import { CreativeProject } from "@/types/creative";
 import CreativeGraph from "@/components/canvas/CreativeGraph";
+import WorkspaceSidebar from "@/components/workspace/WorkspaceSidebar";
 
 interface StudioProps {
   onBack: () => void;
@@ -84,19 +85,33 @@ export default function Studio({ onBack, initialProject = null, initialProjectId
   );
   
   return (
-    <div className="relative z-10 mx-auto max-w-7xl px-6 py-8">
+    <div className="relative z-10 mx-auto max-w-[1600px] px-4 py-6 sm:px-6">
       <nav className="mb-10 flex items-center justify-between">
         <Logo />
 
-        <button
-          onClick={onBack}
-          className="rounded-full border border-white/15 bg-white/10 px-5 py-2 text-sm text-white/80 backdrop-blur-xl transition hover:bg-white/20"
-        >
-          Back to Projects
-        </button>
+        {!project && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="rounded-full border border-white/15 bg-white/10 px-5 py-2 text-sm text-white/80 backdrop-blur-xl transition hover:bg-white/20"
+          >
+            Back to Projects
+          </button>
+        )}
       </nav>
 
-      <section className="grid gap-8 lg:grid-cols-[0.9fr_1.5fr]">
+      <div className="flex items-start gap-6">
+        {project && (
+          <WorkspaceSidebar
+            projectTitle={project.title}
+            onBack={onBack}
+          />
+        )}
+
+        <div className="min-w-0 flex-1">
+          <section className={`grid gap-8 ${
+            project ? "xl:grid-cols-[0.72fr_1.6fr]" : "lg:grid-cols-[0.9fr_1.5fr]"
+          }`}>
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
@@ -171,7 +186,9 @@ export default function Studio({ onBack, initialProject = null, initialProjectId
             <EmptyCanvas />
           )}
         </section>
-      </section>
+          </section>
+        </div>
+      </div>
     </div>
   );
 }
