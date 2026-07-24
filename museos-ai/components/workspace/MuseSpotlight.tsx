@@ -1,17 +1,23 @@
 "use client";
 
 import {
+  BookOpen,
   Bot,
+  BriefcaseBusiness,
   ChevronRight,
   CircleDot,
   Clapperboard,
+  ClipboardList,
   Download,
+  FileText,
   Fingerprint,
   FolderOpen,
   History,
   LayoutDashboard,
+  Megaphone,
   PanelsTopLeft,
   Presentation,
+  Rocket,
   Search,
   Sparkles,
   X,
@@ -43,6 +49,7 @@ export interface SpotlightAction {
   group: SpotlightGroup;
   icon: ReactNode;
   keywords?: string[];
+  shortcut?: string;
   onSelect: () => void;
 }
 
@@ -67,6 +74,15 @@ interface MuseSpotlightProps {
   onOpenDashboard?: () => void;
 
   onFocusCommandCore?: () => void;
+  onGenerateStoryboard?: () => void;
+  onGeneratePitchDeck?: () => void;
+  onGenerateCreativeBible?: () => void;
+  onGenerateProductionPlan?: () => void;
+  onGenerateMarketingPlan?: () => void;
+  onGenerateInvestorBrief?: () => void;
+  onGenerateSocialCampaign?: () => void;
+  onGenerateProjectBrief?: () => void;
+  onFocusProduction?: () => void;
 }
 
 export default function MuseSpotlight({
@@ -77,6 +93,15 @@ export default function MuseSpotlight({
   onOpenProject,
   onOpenDashboard,
   onFocusCommandCore,
+  onGenerateStoryboard,
+  onGeneratePitchDeck,
+  onGenerateCreativeBible,
+  onGenerateProductionPlan,
+  onGenerateMarketingPlan,
+  onGenerateInvestorBrief,
+  onGenerateSocialCampaign,
+  onGenerateProjectBrief,
+  onFocusProduction,
 }: MuseSpotlightProps) {
   const [query, setQuery] =
     useState("");
@@ -103,15 +128,33 @@ export default function MuseSpotlight({
         onOpenProject,
         onOpenDashboard,
         onFocusCommandCore,
+        onGenerateStoryboard,
+        onGeneratePitchDeck,
+        onGenerateCreativeBible,
+        onGenerateProductionPlan,
+        onGenerateMarketingPlan,
+        onGenerateInvestorBrief,
+        onGenerateSocialCampaign,
+        onGenerateProjectBrief,
+        onFocusProduction,
         onClose: closeSpotlight,
       }),
     [
-      currentProject,
-      closeSpotlight,
-      onFocusCommandCore,
-      onOpenDashboard,
-      onOpenProject,
-      savedProjects,
+        currentProject,
+        savedProjects,
+        onOpenProject,
+        onOpenDashboard,
+        onFocusCommandCore,
+        onGenerateStoryboard,
+        onGeneratePitchDeck,
+        onGenerateCreativeBible,
+        onGenerateProductionPlan,
+        onGenerateMarketingPlan,
+        onGenerateInvestorBrief,
+        onGenerateSocialCampaign,
+        onGenerateProjectBrief,
+        onFocusProduction,
+        closeSpotlight,
     ]
   );
 
@@ -387,13 +430,19 @@ export default function MuseSpotlight({
                                   )}
                                 </span>
 
-                                <ChevronRight
-                                  className={`h-4 w-4 shrink-0 transition ${
-                                    isSelected
-                                      ? "translate-x-0 text-white/50"
-                                      : "-translate-x-1 text-white/0"
-                                  }`}
-                                />
+                                <div className="flex shrink-0 items-center gap-2">
+                                  {action.shortcut && (
+                                    <span className="rounded-lg border border-white/[0.08] bg-white/[0.035] px-2 py-1 text-[9px] text-white/25">
+                                      {action.shortcut}
+                                    </span>
+                                  )}
+
+                                  <ChevronRight
+                                    className={`h-4 w-4 transition ${
+                                      isSelected ? "translate-x-0 text-white/50" : "-translate-x-1 text-white/0"
+                                    }`}
+                                  />
+                                </div>
                               </button>
                             );
                           }
@@ -439,6 +488,15 @@ interface CreateSpotlightActionsOptions {
   onOpenDashboard?: () => void;
 
   onFocusCommandCore?: () => void;
+  onGenerateStoryboard?: () => void;
+  onGeneratePitchDeck?: () => void;
+  onGenerateCreativeBible?: () => void;
+  onGenerateProductionPlan?: () => void;
+  onGenerateMarketingPlan?: () => void;
+  onGenerateInvestorBrief?: () => void;
+  onGenerateSocialCampaign?: () => void;
+  onGenerateProjectBrief?: () => void;
+  onFocusProduction?: () => void;
 
   onClose: () => void;
 }
@@ -449,6 +507,15 @@ function createSpotlightActions({
   onOpenProject,
   onOpenDashboard,
   onFocusCommandCore,
+  onGenerateStoryboard,
+  onGeneratePitchDeck,
+  onGenerateCreativeBible,
+  onGenerateProductionPlan,
+  onGenerateMarketingPlan,
+  onGenerateInvestorBrief,
+  onGenerateSocialCampaign,
+  onGenerateProjectBrief,
+  onFocusProduction,
   onClose,
 }: CreateSpotlightActionsOptions): SpotlightAction[] {
   const actions: SpotlightAction[] =
@@ -651,6 +718,181 @@ function createSpotlightActions({
             });
         }
     );
+
+    const productionCommands: Array<{
+      id: string;
+      label: string;
+      description: string;
+      shortcut?: string;
+      icon: ReactNode;
+      keywords: string[];
+      action?: () => void;
+    }> =  [
+  {
+    id: "generate-storyboard",
+    label: "Generate Storyboard",
+    description:
+      "Create an eight-scene cinematic storyboard",
+    shortcut: "⌘⇧1",
+    icon: (
+      <Clapperboard className="h-4 w-4" />
+    ),
+    keywords: [
+      "storyboard",
+      "scenes",
+      "shots",
+      "cinematic",
+    ],
+    action: onGenerateStoryboard,
+  },
+  {
+    id: "generate-pitch-deck",
+    label: "Generate Pitch Deck",
+    description:
+      "Create a polished creative presentation",
+    shortcut: "⌘⇧2",
+    icon: (
+      <Presentation className="h-4 w-4" />
+    ),
+    keywords: [
+      "pitch",
+      "deck",
+      "slides",
+      "presentation",
+    ],
+    action: onGeneratePitchDeck,
+  },
+  {
+    id: "generate-creative-bible",
+    label: "Generate Creative Bible",
+    description:
+      "Define the world, characters and creative rules",
+    shortcut: "⌘⇧3",
+    icon: (
+      <BookOpen className="h-4 w-4" />
+    ),
+    keywords: [
+      "creative bible",
+      "world",
+      "characters",
+      "rules",
+    ],
+    action: onGenerateCreativeBible,
+  },
+  {
+    id: "generate-production-plan",
+    label: "Generate Production Plan",
+    description:
+      "Create scope, timeline, team and execution steps",
+    icon: (
+      <ClipboardList className="h-4 w-4" />
+    ),
+    keywords: [
+      "production",
+      "plan",
+      "timeline",
+      "team",
+    ],
+    action: onGenerateProductionPlan,
+  },
+  {
+    id: "generate-marketing-plan",
+    label: "Generate Marketing Plan",
+    description:
+      "Create positioning, launch phases and audience strategy",
+    icon: (
+      <Megaphone className="h-4 w-4" />
+    ),
+    keywords: [
+      "marketing",
+      "launch",
+      "audience",
+      "campaign",
+    ],
+    action: onGenerateMarketingPlan,
+  },
+  {
+    id: "generate-investor-brief",
+    label: "Generate Investor Brief",
+    description:
+      "Create a concise stakeholder opportunity narrative",
+    icon: (
+      <BriefcaseBusiness className="h-4 w-4" />
+    ),
+    keywords: [
+      "investor",
+      "brief",
+      "stakeholder",
+      "business",
+    ],
+    action: onGenerateInvestorBrief,
+  },
+  {
+    id: "generate-social-campaign",
+    label: "Generate Social Campaign",
+    description:
+      "Create launch-ready social content and activations",
+    icon: (
+      <Rocket className="h-4 w-4" />
+    ),
+    keywords: [
+      "social",
+      "campaign",
+      "posts",
+      "launch",
+    ],
+    action: onGenerateSocialCampaign,
+  },
+  {
+    id: "generate-project-brief",
+    label: "Generate Project Brief",
+    description:
+      "Create a structured brief for collaborators",
+    icon: (
+      <FileText className="h-4 w-4" />
+    ),
+    keywords: [
+      "project",
+      "brief",
+      "stakeholders",
+      "summary",
+    ],
+    action: onGenerateProjectBrief,
+  },
+];
+
+    productionCommands.forEach((command) => {
+      if (!command.action) { return; }
+
+      actions.push({
+        id: command.id,
+        label: command.label,
+        description: command.description,
+        shortcut: command.shortcut,
+        group: "Actions",
+        icon: command.icon,
+        keywords: command.keywords,
+        onSelect: () => {
+          onClose();
+          window.setTimeout(() => {command.action?.();}, 120);
+        },
+      });
+    });
+
+    if (onFocusProduction) {
+      actions.push({
+        id: "focus-production",
+        label: "Open Production Studio",
+        description: "Jump to production-ready creative assets",
+        group: "Workspace",
+        icon: (<Clapperboard className="h-4 w-4" />),
+        keywords: ["production", "studio", "outputs", "assets"],
+        onSelect: () => {
+          onClose();
+          window.setTimeout(() => {onFocusProduction();}, 100);
+        },
+      });
+    }
 
     if (onFocusCommandCore) {
       actions.push({

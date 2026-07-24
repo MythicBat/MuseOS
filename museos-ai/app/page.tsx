@@ -224,6 +224,15 @@ export default function Home() {
         onOpenDashboard={() => {setView("dashboard");}}
         onOpenProject={handleOpenProject}
         onFocusCommandCore={() => {focusCommandCoreRef.current?.();}}
+        onGenerateStoryboard={() => { void productionApiRef.current?.generateStoryboard();}}
+        onGeneratePitchDeck={() => { void productionApiRef.current?.generatePitchDeck();}}
+        onGenerateCreativeBible={() => { void productionApiRef.current?.generateCreativeBible(); }}
+        onGenerateProductionPlan={() => { void productionApiRef.current?.generateProductionPlan(); }}
+        onGenerateMarketingPlan={() => { void productionApiRef.current?.generateMarketingPlan(); }}
+        onGenerateInvestorBrief={() => { void productionApiRef.current?.generateInvestorBrief(); }}
+        onGenerateSocialCampaign={() => { void productionApiRef.current?.generateSocialCampaign(); }}
+        onGenerateProjectBrief={() => { void productionApiRef.current?.generateProjectBrief(); }}
+        onFocusProduction={() => { void productionApiRef.current?.focusProduction(); }}
       />
     </main>
   );
