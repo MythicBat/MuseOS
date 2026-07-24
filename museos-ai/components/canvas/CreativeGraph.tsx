@@ -28,13 +28,25 @@ import CommandCore, {
   CommandCoreHandle,
 } from "@/components/canvas/CommandCore";
 import VersionCompareModal from "@/components/canvas/VersionCompareModal";
-import ProductionWorkspace from "@/components/canvas/ProductionWorkspace";
+import ProductionWorkspace, { ProductionWorkspaceHandle } from "@/components/canvas/ProductionWorkspace";
 
 import { runCreativeCommand } from "@/lib/api";
 import { cloneCreativeProject } from "@/lib/creativeVersion";
 
 import { useCreativeOrchestra } from "@/hooks/useCreativeOrchestra";
 import { useCreativeHistory } from "@/hooks/useCreativeHistory";
+
+export interface CreativeGraphProductionHandle {
+  generateStoryboard(): Promise<void>;
+  generatePitchDeck(): Promise<void>;
+  generateCreativeBible(): Promise<void>;
+  generateProductionPlan(): Promise<void>;
+  generateMarketingPlan(): Promise<void>;
+  generateInvestorBrief(): Promise<void>;
+  generateSocialCampaign(): Promise<void>;
+  generateProjectBrief(): Promise<void>;
+  focusProduction(): void;
+}
 
 interface CreativeGraphProps {
   project: CreativeProject;
@@ -44,12 +56,16 @@ interface CreativeGraphProps {
   onCommandCoreReady?: (
     focusCommandCore: () => void
   ) => void;
+  onProductionReady?: (
+    api: CreativeGraphProductionHandle
+  ) => void;
 }
 
 export default function CreativeGraph({
   project,
   onProjectChange,
   onCommandCoreReady,
+  onProductionReady,
 }: CreativeGraphProps) {
 
   const [selectedNode, setSelectedNode] =
@@ -115,6 +131,26 @@ export default function CreativeGraph({
 
     onCommandCoreReady(focusCommandCore);
   }, [onCommandCoreReady]);
+
+  const productionWorkspaceRef = useRef<ProductionWorkspaceHandle>(null);
+
+  useEffect(() => {
+  if (!onProductionReady) {
+    return;
+  }
+
+  onProductionReady({
+    generateStoryboard: () => productionWorkspaceRef.current!.generateStoryboard(),
+    generatePitchDeck: () => productionWorkspaceRef.current!.generatePitchDeck(),
+    generateCreativeBible: () => productionWorkspaceRef.current!.generateCreativeBible(),
+    generateProductionPlan: () => productionWorkspaceRef.current!.generateProductionPlan(),
+    generateMarketingPlan: () => productionWorkspaceRef.current!.generateMarketingPlan(),
+    generateInvestorBrief: () => productionWorkspaceRef.current!.generateInvestorBrief(),
+    generateSocialCampaign: () => productionWorkspaceRef.current!.generateSocialCampaign(),
+    generateProjectBrief: () => productionWorkspaceRef.current!.generateProjectBrief(),
+    focusProduction: () => productionWorkspaceRef.current?.focusProduction(),
+  });
+  }, [onProductionReady]);
 
   const [versionComparison, setVersionComparison] = useState<CreativeVersionComparison | null>(null);
 
@@ -983,6 +1019,7 @@ export default function CreativeGraph({
         className="scroll-mt-6"
       >
         <ProductionWorkspace
+          ref={productionWorkspaceRef}
           project={liveProject}
           versionId={activeVersionId}
           versionLabel={activeVersion?.label}

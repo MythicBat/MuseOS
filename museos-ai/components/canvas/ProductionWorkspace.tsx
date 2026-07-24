@@ -2,6 +2,10 @@
 
 import {
   useState,
+  useMemo,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
 } from "react";
 
 import {
@@ -51,6 +55,18 @@ interface ProductionWorkspaceProps {
   versionId?: string;
   versionLabel?: string;
   branchName?: string;
+}
+
+export interface ProductionWorkspaceHandle {
+  generateStoryboard: () => Promise<void>;
+  generatePitchDeck: () => Promise<void>;
+  generateCreativeBible: () => Promise<void>;
+  generateProductionPlan: () => Promise<void>;
+  generateMarketingPlan: () => Promise<void>;
+  generateInvestorBrief: () => Promise<void>;
+  generateSocialCampaign: () => Promise<void>;
+  generateProjectBrief: () => Promise<void>;
+  focusProduction: () => void;
 }
 
 interface OutputDefinition {
@@ -133,12 +149,17 @@ const outputDefinitions: OutputDefinition[] = [
   },
 ];
 
-export default function ProductionWorkspace({
-  project,
-  versionId,
-  versionLabel,
-  branchName,
-}: ProductionWorkspaceProps) {
+const ProductionWorkspace = forwardRef<
+ProductionWorkspaceHandle,
+ProductionWorkspaceProps>(function ProductionWorkspace(
+  {
+    project,
+    versionId,
+    versionLabel,
+    branchName,
+  },
+  ref
+) {
 
   const productionStorageKey = `museos-production-${createStorageSlug(project.title)}`;
 
@@ -182,12 +203,23 @@ export default function ProductionWorkspace({
   const [copied, setCopied] =
     useState(false);
 
-  const generateOutput = async (
+  
+  const generateOutput = useCallback(
+  async (
     type: ProductionOutputType
-  ) => {
+  ): Promise<void> => {
     setSelectedType(type);
     setLoadingType(type);
     setError(null);
+
+    document
+      .getElementById(
+        "workspace-production"
+      )
+      ?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
 
     try {
       const output =
@@ -199,8 +231,29 @@ export default function ProductionWorkspace({
           branchName,
         });
 
-        saveOutput(output);
+      saveOutput(output);
 
+      setActiveOutputId(
+        output.id
+      );
+
+      window.setTimeout(() => {
+        const sectionId =
+          type === "storyboard"
+            ? "workspace-storyboards"
+            : type === "pitch-deck"
+              ? "workspace-pitch-deck"
+              : "workspace-production-output";
+
+        document
+          .getElementById(
+            sectionId
+          )
+          ?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+      }, 180);
     } catch (generationError) {
       const message =
         generationError instanceof Error
@@ -211,8 +264,72 @@ export default function ProductionWorkspace({
     } finally {
       setLoadingType(null);
     }
-  };
+  },
+  [
+    branchName,
+    project,
+    saveOutput,
+    setActiveOutputId,
+    versionId,
+    versionLabel,
+  ]);
 
+  useImperativeHandle(
+  ref,
+  () => ({
+    generateStoryboard: () =>
+      generateOutput(
+        "storyboard"
+      ),
+
+    generatePitchDeck: () =>
+      generateOutput(
+        "pitch-deck"
+      ),
+
+    generateCreativeBible: () =>
+      generateOutput(
+        "creative-bible"
+      ),
+
+    generateProductionPlan: () =>
+      generateOutput(
+        "production-plan"
+      ),
+
+    generateMarketingPlan: () =>
+      generateOutput(
+        "marketing-plan"
+      ),
+
+    generateInvestorBrief: () =>
+      generateOutput(
+        "investor-brief"
+      ),
+
+    generateSocialCampaign: () =>
+      generateOutput(
+        "social-campaign"
+      ),
+
+    generateProjectBrief: () =>
+      generateOutput(
+        "project-brief"
+      ),
+
+    focusProduction: () => {
+      document
+        .getElementById(
+          "workspace-production"
+        )
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+    },
+  }),
+  [generateOutput]);
+  
   const copyOutput = async () => {
     if (!activeOutput) return;
 
@@ -446,6 +563,7 @@ export default function ProductionWorkspace({
       <AnimatePresence>
         {activeOutput && (
           <motion.div
+            id="workspace-production-output"
             initial={{
               opacity: 0,
               y: 18,
@@ -458,7 +576,7 @@ export default function ProductionWorkspace({
               opacity: 0,
               y: 18,
             }}
-            className="mt-5 overflow-hidden rounded-[26px] border border-white/10 bg-black/30"
+            className="mt-5 scroll-mt-24 overflow-hidden rounded-[26px] border border-white/10 bg-black/30"
           >
             <div className="flex flex-col gap-4 border-b border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -596,7 +714,7 @@ export default function ProductionWorkspace({
             </div>
             
             {exportError && (
-              <div className="border-b border-red-300/10 bg-red-400[0.06] px-5 py-3 text-xs text-red-200/65">
+              <div className="border-b border-red-300/10 bg-red-400/[0.06] px-5 py-3 text-xs text-red-200/65">
                 {exportError}
               </div>
             )}
@@ -965,7 +1083,10 @@ export default function ProductionWorkspace({
 </AnimatePresence>
     </div>
   );
-}
+});
+
+ProductionWorkspace.displayName = "ProductionWorkspace";
+export default ProductionWorkspace;
 
 function ExportMenuButton({
   icon,
