@@ -13,6 +13,7 @@ import Hero from "@/components/Hero";
 import Studio from "@/components/Studio";
 import ProjectDashboard from "@/components/dashboard/ProjectDashboard";
 import MuseSpotlight from "@/components/workspace/MuseSpotlight";
+import type { CreativeGraphProductionHandle } from "@/components/canvas/CreativeGraph";
 
 import {
   AmbientParticles,
@@ -80,6 +81,9 @@ export default function Home() {
   };
 
   const handleBackToProjects = () => {
+    focusCommandCoreRef.current = null;
+    productionApiRef.current = null;
+    setSelectedProjectId(null);
     setView("dashboard");
   };
 
@@ -102,10 +106,15 @@ export default function Home() {
   };
 
   const focusCommandCoreRef = useRef<(() => void) | null>(null);
+  const productionApiRef = useRef<CreativeGraphProductionHandle | null>(null);
 
   const handleCommandCoreReady = useCallback((focusCommandCore: () => void) => {
     focusCommandCoreRef.current = focusCommandCore;
   }, []);
+
+  const handleProductionReady = useCallback((api: CreativeGraphProductionHandle) => {
+    productionApiRef.current = api;
+  },[]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -201,6 +210,7 @@ export default function Home() {
               handleBackToProjects
             }
             onCommandReady={handleCommandCoreReady}
+            onProductionReady={handleProductionReady}
             onProjectCreated={setSelectedProjectId}
           />
         )}

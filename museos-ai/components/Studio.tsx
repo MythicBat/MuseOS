@@ -10,7 +10,7 @@ import LoadingCanvas from "@/components/LoadingCanvas";
 import CreativeCanvas from "@/components/CreativeCanvas";
 import { generateProject } from "@/lib/api";
 import { CreativeProject } from "@/types/creative";
-import CreativeGraph from "@/components/canvas/CreativeGraph";
+import CreativeGraph, { CreativeGraphProductionHandle } from "@/components/canvas/CreativeGraph";
 import WorkspaceSidebar from "@/components/workspace/WorkspaceSidebar";
 
 interface StudioProps {
@@ -26,9 +26,12 @@ interface StudioProps {
     focusCommandCore: () => void
   ) => void;
   onProjectCreated?: (projectId: string) => void;
+  onProductionReady?: (
+    api: CreativeGraphProductionHandle
+  ) => void;
 }
 
-export default function Studio({ onBack, initialProject = null, initialProjectId = null, onSaveProject, onCommandReady, onProjectCreated }: StudioProps) {
+export default function Studio({ onBack, initialProject = null, initialProjectId = null, onSaveProject, onCommandReady, onProjectCreated, onProductionReady }: StudioProps) {
   const [idea, setIdea] = useState("");
   const [project, setProject] = useState<CreativeProject | null>(() => initialProject);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(() => initialProjectId);
@@ -187,6 +190,7 @@ export default function Studio({ onBack, initialProject = null, initialProjectId
               project={project}
               onProjectChange={handleProjectChange}
               onCommandCoreReady={onCommandReady}
+              onProductionReady={onProductionReady}
             />
           ) : (
             <EmptyCanvas />
