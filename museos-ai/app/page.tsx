@@ -232,6 +232,9 @@ export default function Home() {
         onGenerateInvestorBrief={() => { void productionApiRef.current?.generateInvestorBrief(); }}
         onGenerateSocialCampaign={() => { void productionApiRef.current?.generateSocialCampaign(); }}
         onGenerateProjectBrief={() => { void productionApiRef.current?.generateProjectBrief(); }}
+        onExportPDF={() => { void productionApiRef.current?.exportActivePDF(); }}
+        onExportPowerPoint={() => { void productionApiRef.current?.exportActivePowerPoint(); }}
+        onFocusExports={() => { void productionApiRef.current?.focusExports(); }}
         onFocusProduction={() => { void productionApiRef.current?.focusProduction(); }}
       />
     </main>

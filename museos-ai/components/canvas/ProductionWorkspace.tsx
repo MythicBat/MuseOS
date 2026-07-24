@@ -66,7 +66,11 @@ export interface ProductionWorkspaceHandle {
   generateInvestorBrief: () => Promise<void>;
   generateSocialCampaign: () => Promise<void>;
   generateProjectBrief: () => Promise<void>;
+
+  exportActivePDF: () => Promise<void>;
+  exportActivePowerPoint: () => Promise<void>;
   focusProduction: () => void;
+  focusExports: () => void;
 }
 
 interface OutputDefinition {
@@ -203,6 +207,52 @@ ProductionWorkspaceProps>(function ProductionWorkspace(
   const [copied, setCopied] =
     useState(false);
 
+  const handleExport = useCallback(
+    async(format: ProductionExportFormat): Promise<void> => {
+      if (!activeOutput) {
+        setExportError("Open a generated production asset before exporting.");
+
+        document.getElementById("workspace-production")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+
+        return;
+      }
+
+      if (
+        format === "powerpoint" &&
+        activeOutput.structuredData?.format !== "pitch-deck"
+      ) {
+        setExportError("PowerPoint export is available only for pitch-decks");
+
+        document.getElementById("workspace-exports")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+
+        return;
+      }
+
+      setExportingFormat(format);
+      setExportError(null);
+      setExportMenuOpen(false);
+
+      try {
+        await exportProductionOutput(
+          activeOutput,
+          format,
+        );
+      } catch (exportFailure) {
+        const message = exportFailure instanceof Error ? exportFailure.message : "Unable to export this asset.";
+
+        setExportError(message);
+      } finally {
+        setExportingFormat(null);
+      }
+    },
+    [activeOutput]
+  );
   
   const generateOutput = useCallback(
   async (
@@ -317,6 +367,30 @@ ProductionWorkspaceProps>(function ProductionWorkspace(
         "project-brief"
       ),
 
+    exportActivePDF: () =>
+      handleExport("pdf"),
+
+    exportActivePowerPoint: () => 
+      handleExport("powerpoint"),
+
+    focusExports: () => {
+      const exportElement = document.getElementById("workspace-exports");
+
+      const productionElement = document.getElementById("workspace-production");
+
+      const target = exportElement ?? productionElement;
+
+      target?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      if (exportElement) {
+        setExportMenuOpen(true);
+        setExportError(null);
+      }
+    },
+
     focusProduction: () => {
       document
         .getElementById(
@@ -328,7 +402,7 @@ ProductionWorkspaceProps>(function ProductionWorkspace(
         });
     },
   }),
-  [generateOutput]);
+  [generateOutput, handleExport]);
   
   const copyOutput = async () => {
     if (!activeOutput) return;
@@ -342,27 +416,6 @@ ProductionWorkspaceProps>(function ProductionWorkspace(
     window.setTimeout(() => {
       setCopied(false);
     }, 1600);
-  };
-
-  const handleExport = async(format: ProductionExportFormat) => {
-    if (!activeOutput) return;
-
-    setExportingFormat(format);
-    setExportError(null);
-    setExportMenuOpen(false);
-
-    try {
-      await exportProductionOutput(
-        activeOutput,
-        format
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to export this asset.";
-
-      setExportError(message);
-    } finally {
-      setExportingFormat(null);
-    }
   };
 
   const updatePitchDeck = (

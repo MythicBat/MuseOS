@@ -83,6 +83,9 @@ interface MuseSpotlightProps {
   onGenerateSocialCampaign?: () => void;
   onGenerateProjectBrief?: () => void;
   onFocusProduction?: () => void;
+  onExportPDF?: () => void;
+  onExportPowerPoint?: () => void;
+  onFocusExports?: () => void;
 }
 
 export default function MuseSpotlight({
@@ -102,6 +105,9 @@ export default function MuseSpotlight({
   onGenerateSocialCampaign,
   onGenerateProjectBrief,
   onFocusProduction,
+  onExportPDF,
+  onExportPowerPoint,
+  onFocusExports,
 }: MuseSpotlightProps) {
   const [query, setQuery] =
     useState("");
@@ -137,6 +143,9 @@ export default function MuseSpotlight({
         onGenerateSocialCampaign,
         onGenerateProjectBrief,
         onFocusProduction,
+        onExportPDF,
+        onExportPowerPoint,
+        onFocusExports,
         onClose: closeSpotlight,
       }),
     [
@@ -154,6 +163,9 @@ export default function MuseSpotlight({
         onGenerateSocialCampaign,
         onGenerateProjectBrief,
         onFocusProduction,
+        onExportPDF,
+        onExportPowerPoint,
+        onFocusExports,
         closeSpotlight,
     ]
   );
@@ -497,6 +509,9 @@ interface CreateSpotlightActionsOptions {
   onGenerateSocialCampaign?: () => void;
   onGenerateProjectBrief?: () => void;
   onFocusProduction?: () => void;
+  onExportPDF?: () => void;
+  onExportPowerPoint?: () => void;
+  onFocusExports?: () => void;
 
   onClose: () => void;
 }
@@ -516,6 +531,9 @@ function createSpotlightActions({
   onGenerateSocialCampaign,
   onGenerateProjectBrief,
   onFocusProduction,
+  onExportPDF,
+  onExportPowerPoint,
+  onFocusExports,
   onClose,
 }: CreateSpotlightActionsOptions): SpotlightAction[] {
   const actions: SpotlightAction[] =
@@ -890,6 +908,51 @@ function createSpotlightActions({
         onSelect: () => {
           onClose();
           window.setTimeout(() => {onFocusProduction();}, 100);
+        },
+      });
+    }
+
+    if (onExportPDF) {
+      actions.push({
+        id: "export-active-pdf",
+        label: "Export Active Asset as PDF",
+        description: "Download the currently open production asset.",
+        group: "Actions",
+        icon: (<FileText className="h-4 w-4" />),
+        keywords: ["export", "pdf", "download", "document"],
+        onSelect: () => {
+          onClose();
+          window.setTimeout(() => {onExportPDF(); }, 120);
+        },
+      });
+    }
+
+    if (onExportPowerPoint) {
+      actions.push({
+        id: "export-active-powerpoint",
+        label: "Export Pitch Deck as PowerPoint",
+        description: "Download the active pitch deck as a PPTX file",
+        group: "Actions",
+        icon: (<Presentation className="h-4 w-4" />),
+        keywords: ["export", "powerpoint", "pptx", "slides", "pitch deck"],
+        onSelect: () => {
+          onClose();
+          window.setTimeout(() => {onExportPowerPoint();}, 120);
+        },
+      });
+    }
+
+    if (onFocusExports) {
+      actions.push({
+        id: "focus-exports",
+        label: "Open Export Controls",
+        description: "View the available formats for the active asset.",
+        group: "Workspace",
+        icon: (<Download className="h-4 w-4" />),
+        keywords: ["exports", "formats", "pdf", "json", "powerpoint", "markdown"],
+        onSelect: () => {
+          onClose();
+          window.setTimeout(() => {onFocusExports();}, 100);
         },
       });
     }

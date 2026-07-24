@@ -45,6 +45,9 @@ export interface CreativeGraphProductionHandle {
   generateInvestorBrief(): Promise<void>;
   generateSocialCampaign(): Promise<void>;
   generateProjectBrief(): Promise<void>;
+  exportActivePDF(): Promise<void>;
+  exportActivePowerPoint(): Promise<void>;
+  focusExports(): void;
   focusProduction(): void;
 }
 
@@ -148,6 +151,9 @@ export default function CreativeGraph({
     generateInvestorBrief: () => productionWorkspaceRef.current!.generateInvestorBrief(),
     generateSocialCampaign: () => productionWorkspaceRef.current!.generateSocialCampaign(),
     generateProjectBrief: () => productionWorkspaceRef.current!.generateProjectBrief(),
+    exportActivePDF: () => productionWorkspaceRef.current?.exportActivePDF() ?? Promise.resolve(),
+    exportActivePowerPoint: () => productionWorkspaceRef.current?.exportActivePowerPoint() ?? Promise.resolve(),
+    focusExports: () => productionWorkspaceRef.current?.focusExports(),
     focusProduction: () => productionWorkspaceRef.current?.focusProduction(),
   });
   }, [onProductionReady]);
