@@ -8,6 +8,7 @@ import {
   CircleDot,
   Clapperboard,
   ClipboardList,
+  Copy,
   Download,
   FileText,
   Fingerprint,
@@ -16,6 +17,7 @@ import {
   LayoutDashboard,
   Megaphone,
   PanelsTopLeft,
+  Pencil,
   Presentation,
   Rocket,
   Search,
@@ -86,6 +88,9 @@ interface MuseSpotlightProps {
   onExportPDF?: () => void;
   onExportPowerPoint?: () => void;
   onFocusExports?: () => void;
+  onRenameProject?: () => void;
+  onDuplicateProject?: () => void;
+  onReturnToDashboard?: () => void;
 }
 
 export default function MuseSpotlight({
@@ -108,6 +113,9 @@ export default function MuseSpotlight({
   onExportPDF,
   onExportPowerPoint,
   onFocusExports,
+  onDuplicateProject,
+  onRenameProject,
+  onReturnToDashboard,
 }: MuseSpotlightProps) {
   const [query, setQuery] =
     useState("");
@@ -146,6 +154,9 @@ export default function MuseSpotlight({
         onExportPDF,
         onExportPowerPoint,
         onFocusExports,
+        onRenameProject,
+        onDuplicateProject,
+        onReturnToDashboard,
         onClose: closeSpotlight,
       }),
     [
@@ -166,6 +177,9 @@ export default function MuseSpotlight({
         onExportPDF,
         onExportPowerPoint,
         onFocusExports,
+        onRenameProject,
+        onDuplicateProject,
+        onReturnToDashboard,
         closeSpotlight,
     ]
   );
@@ -512,6 +526,9 @@ interface CreateSpotlightActionsOptions {
   onExportPDF?: () => void;
   onExportPowerPoint?: () => void;
   onFocusExports?: () => void;
+  onRenameProject?: () => void;
+  onDuplicateProject?: () => void;
+  onReturnToDashboard?: () => void;
 
   onClose: () => void;
 }
@@ -534,6 +551,9 @@ function createSpotlightActions({
   onExportPDF,
   onExportPowerPoint,
   onFocusExports,
+  onDuplicateProject,
+  onRenameProject,
+  onReturnToDashboard,
   onClose,
 }: CreateSpotlightActionsOptions): SpotlightAction[] {
   const actions: SpotlightAction[] =
@@ -953,6 +973,51 @@ function createSpotlightActions({
         onSelect: () => {
           onClose();
           window.setTimeout(() => {onFocusExports();}, 100);
+        },
+      });
+    }
+
+    if (onRenameProject) {
+      actions.push({
+        id: "rename-current-project",
+        label: "Rename Universe",
+        description: "Change the name of the current creative universe",
+        group: "Actions",
+        icon: (<Pencil className="h-4 w-4" />),
+        keywords: ["rename", "project", "universe", "title", "name"],
+        onSelect: () => {
+          onClose();
+          window.setTimeout(() => {onRenameProject();}, 100);
+        },
+      });
+    }
+
+    if (onDuplicateProject) {
+      actions.push({
+        id: "duplicate-current-project",
+        label: "Duplicate Universe",
+        description: "Create an independent copy of this creative universe",
+        group: "Actions",
+        icon: (<Copy className="h-4 w-4" />),
+        keywords: ["duplicate", "copy", "clone", "project", "universe"],
+        onSelect: () => {
+          onClose();
+          window.setTimeout(() => {onDuplicateProject();}, 100);
+        },
+      });
+    }
+
+    if (onReturnToDashboard) {
+      actions.push({
+        id: "return-to-dashboard",
+        label: "Return to Dashboard",
+        description: "Leave the current workspace and view all universes",
+        group: "Workspace",
+        icon: (<LayoutDashboard className="h-4 w-4" />),
+        keywords: ["dashboard", "projects", "home", "back", "universes"],
+        onSelect: () => {
+          onClose();
+          window.setTimeout(() => {onReturnToDashboard();}, 100);
         },
       });
     }

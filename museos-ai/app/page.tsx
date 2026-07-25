@@ -21,6 +21,7 @@ import {
 } from "@/components/ui";
 
 import { useSavedProjects } from "@/hooks/useSavedProjects";
+import { AnimatePresence, motion } from "framer-motion";
 
 type AppView =
   | "hero"
@@ -36,7 +37,10 @@ export default function Home() {
     setSelectedProjectId,
   ] = useState<string | null>(null);
 
-  const [spotlightOpen, setSpotlightOpen] = useState(false);
+  const [spotlightOpen, setSpotlightOpen] = useState(false);  
+
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameProjectValue, setRenameProjectValue] = useState("");
 
   const {
     projects,
@@ -61,6 +65,49 @@ export default function Home() {
       selectedProjectId,
     ]
   );
+
+  const handleRenameCurrentProject = useCallback(() => {
+    if (!selectedProject) { return; }
+
+    setRenameProjectValue(selectedProject.project.title);
+    setRenameDialogOpen(true);
+  }, [selectedProject]);
+
+  const confirmRenameProject = useCallback(() => {
+    if (!selectedProject) { return; }
+
+    const nextTitle = renameProjectValue.trim();
+    
+    if (!nextTitle) { return; }
+
+    renameProject(selectedProject.id, nextTitle);
+
+    setRenameDialogOpen(false);
+    setRenameProjectValue("");
+  }, [renameProjectValue, selectedProject, renameProject]); 
+
+  const handleDuplicateCurrentProject =
+  useCallback(() => {
+    if (!selectedProject) {
+      return;
+    }
+
+    const duplicateProjectData = structuredClone(selectedProject.project);
+
+    duplicateProjectData.title = `${duplicateProjectData.title} Copy`;
+
+    const duplicateId =
+      saveProject(duplicateProjectData);
+
+    setSelectedProjectId(
+      duplicateId
+    );
+
+    setView("studio");
+  }, [
+    saveProject,
+    selectedProject,
+  ]);
 
   const handleEnterWorkspace = () => {
     setView("dashboard");
@@ -236,7 +283,70 @@ export default function Home() {
         onExportPowerPoint={() => { void productionApiRef.current?.exportActivePowerPoint(); }}
         onFocusExports={() => { void productionApiRef.current?.focusExports(); }}
         onFocusProduction={() => { void productionApiRef.current?.focusProduction(); }}
+        onRenameProject={handleRenameCurrentProject}
+        onDuplicateProject={handleDuplicateCurrentProject}
+        onReturnToDashboard={handleBackToProjects}
       />
+
+      <AnimatePresence>
+        {renameDialogOpen && (
+          <>
+            <motion.button
+              type="button"
+              aria-label="Close rename dialog"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setRenameDialogOpen(false);
+                setRenameProjectValue("");
+              }}
+              className="fixed inset-0 z-[180] cursor-default bg-black/70 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              className="fixed left-1/2 top-1/2 z-[190] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-[30px] border border-white/10 bg-[#16141f] p-6 shadow-2xl"
+            >
+              <p className="text-xs uppercase tracking-[0.18em] text-white/30">Universe Settings</p>
+              <h2 className="mt-2 text-xl font-semibold text-white">Rename Universe</h2>
+              <p className="mt-1 text-sm leading-6 text-white/40">Give this creative universe a new title</p>
+
+              <input
+                autoFocus
+                value={renameProjectValue}
+                onChange={(event) => setRenameProjectValue(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") { confirmRenameProject(); }
+                  if (event.key === "Escape") { setRenameDialogOpen(false); setRenameProjectValue(""); }
+                }}
+                className="mt-5 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/30"
+              />
+
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {setRenameDialogOpen(false); setRenameProjectValue(""); }}
+                  className="rounded-full border border-white/10 px-4 py-2 text-xs text-white/50 transition hover:bg-white/10"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={confirmRenameProject}
+                  disabled={!renameProjectValue.trim()}
+                  className="rounded-full bg-white px-4 py-2 text-xs font-medium text-black transition disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Rename
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
