@@ -210,28 +210,32 @@ ProductionWorkspaceProps>(function ProductionWorkspace(
   const handleExport = useCallback(
     async(format: ProductionExportFormat): Promise<void> => {
       if (!activeOutput) {
-        setExportError("Open a generated production asset before exporting.");
+        const message = "Open a generated production asset before exporting.";
+
+        setExportError(message);
 
         document.getElementById("workspace-production")?.scrollIntoView({
           behavior: "smooth",
           block: "start",
         });
 
-        return;
+        throw new Error(message);
       }
 
       if (
         format === "powerpoint" &&
         activeOutput.structuredData?.format !== "pitch-deck"
       ) {
-        setExportError("PowerPoint export is available only for pitch-decks");
+        const message = "PowerPoint is available only for pitch decks.";
+
+        setExportError(message);
 
         document.getElementById("workspace-exports")?.scrollIntoView({
           behavior: "smooth",
           block: "center",
         });
 
-        return;
+        throw new Error(message);
       }
 
       setExportingFormat(format);
@@ -247,6 +251,8 @@ ProductionWorkspaceProps>(function ProductionWorkspace(
         const message = exportFailure instanceof Error ? exportFailure.message : "Unable to export this asset.";
 
         setExportError(message);
+
+        throw new Error(message);
       } finally {
         setExportingFormat(null);
       }
@@ -311,6 +317,8 @@ ProductionWorkspaceProps>(function ProductionWorkspace(
           : "Unable to generate output.";
 
       setError(message);
+
+      throw new Error(message);
     } finally {
       setLoadingType(null);
     }

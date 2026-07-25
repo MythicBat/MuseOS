@@ -13,6 +13,7 @@ import Hero from "@/components/Hero";
 import Studio from "@/components/Studio";
 import ProjectDashboard from "@/components/dashboard/ProjectDashboard";
 import MuseSpotlight from "@/components/workspace/MuseSpotlight";
+import MuseNotificationCenter from "@/components/system/MuseNotificationCenter";
 import type { CreativeGraphProductionHandle } from "@/components/canvas/CreativeGraph";
 
 import {
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui";
 
 import { useSavedProjects } from "@/hooks/useSavedProjects";
+import { useMuseNotifications } from "@/hooks/useMuseNotifications";
 import { AnimatePresence, motion } from "framer-motion";
 
 type AppView =
@@ -41,6 +43,13 @@ export default function Home() {
 
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameProjectValue, setRenameProjectValue] = useState("");
+
+  const {
+    notifications,
+    notify,
+    updateNotification,
+    dismissNotification,
+  } = useMuseNotifications();
 
   const {
     projects,
@@ -78,13 +87,28 @@ export default function Home() {
 
     const nextTitle = renameProjectValue.trim();
     
-    if (!nextTitle) { return; }
+    if (!nextTitle) {
+      notify({
+        type: "warning",
+        title: "Title required",
+        message: "Enter a name for this creative universe",
+      });
 
+      return;
+    }
+
+    const previousTitle = selectedProject.project.title;
     renameProject(selectedProject.id, nextTitle);
 
     setRenameDialogOpen(false);
     setRenameProjectValue("");
-  }, [renameProjectValue, selectedProject, renameProject]); 
+
+    notify({
+      type: "success",
+      title: "Universe renamed",
+      message: `${previousTitle} is now ${nextTitle}.`,
+    });
+  }, [notify, renameProjectValue, selectedProject, renameProject]); 
 
   const handleDuplicateCurrentProject =
   useCallback(() => {
@@ -104,7 +128,14 @@ export default function Home() {
     );
 
     setView("studio");
+
+    notify({
+      type: "success",
+      title: "Universe duplicated",
+      message: `${duplicateProjectData.title} is ready to edit.`,
+    });
   }, [
+    notify,
     saveProject,
     selectedProject,
   ]);
@@ -151,6 +182,123 @@ export default function Home() {
       setSelectedProjectId(null);
     }
   };
+
+  const runProductionCommand = useCallback(
+    async (
+      label: string,
+      command: | (() => Promise<void>) | undefined
+    ) => {
+      if (!command) {
+        notify({
+          type: "error",
+          title: "Production unavailable.",
+          message: "Open a creative universe before generating assets.",
+        });
+
+        return;
+      }
+
+      const notificationId = 
+        notify({
+          type: "loading",
+          title: `Generating ${label}`,
+          message: "IBM Granite is building the production asset.",
+          persistent: true,
+        });
+
+      try {
+        await command();
+
+        updateNotification(
+          notificationId,
+          {
+            type: "success",
+            title: `${label} ready`,
+            message: "The generated asset has been added to Production Studio.",
+            duration: 4200,
+          }
+        );
+      } catch (error) {
+        const message = error instanceof Error
+          ? error.message : `Unable to generate ${label.toLowerCase()}.`;
+
+        updateNotification(
+          notificationId,
+          {
+            type: "error",
+            title: `${label} generation failed`,
+            message,
+            duration: 6000,
+          }
+        );
+      }
+    },
+    [notify, updateNotification]
+  );
+
+  const runExportCommand =
+  useCallback(
+    async (
+      label: string,
+      command:
+        | (() => Promise<void>)
+        | undefined
+    ) => {
+      if (!command) {
+        notify({
+          type: "warning",
+          title: "Nothing to export",
+          message:
+            "Open a generated production asset first.",
+        });
+
+        return;
+      }
+
+      const notificationId =
+        notify({
+          type: "loading",
+          title: `Preparing ${label}`,
+          message:
+            "MuseOS is packaging the active asset.",
+          persistent: true,
+        });
+
+      try {
+        await command();
+
+        updateNotification(
+          notificationId,
+          {
+            type: "success",
+            title: `${label} exported`,
+            message:
+              "Your file is ready.",
+            duration: 4000,
+          }
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to export this asset.";
+
+        updateNotification(
+          notificationId,
+          {
+            type: "error",
+            title: "Export failed",
+            message,
+            duration: 6000,
+          }
+        );
+      }
+    },
+    [
+      notify,
+      updateNotification,
+    ]
+  );
 
   const focusCommandCoreRef = useRef<(() => void) | null>(null);
   const productionApiRef = useRef<CreativeGraphProductionHandle | null>(null);
@@ -271,21 +419,26 @@ export default function Home() {
         onOpenDashboard={() => {setView("dashboard");}}
         onOpenProject={handleOpenProject}
         onFocusCommandCore={() => {focusCommandCoreRef.current?.();}}
-        onGenerateStoryboard={() => { void productionApiRef.current?.generateStoryboard();}}
-        onGeneratePitchDeck={() => { void productionApiRef.current?.generatePitchDeck();}}
-        onGenerateCreativeBible={() => { void productionApiRef.current?.generateCreativeBible(); }}
-        onGenerateProductionPlan={() => { void productionApiRef.current?.generateProductionPlan(); }}
-        onGenerateMarketingPlan={() => { void productionApiRef.current?.generateMarketingPlan(); }}
-        onGenerateInvestorBrief={() => { void productionApiRef.current?.generateInvestorBrief(); }}
-        onGenerateSocialCampaign={() => { void productionApiRef.current?.generateSocialCampaign(); }}
-        onGenerateProjectBrief={() => { void productionApiRef.current?.generateProjectBrief(); }}
-        onExportPDF={() => { void productionApiRef.current?.exportActivePDF(); }}
-        onExportPowerPoint={() => { void productionApiRef.current?.exportActivePowerPoint(); }}
+        onGenerateStoryboard={() => { void runProductionCommand("Storyboard", productionApiRef.current ? () => productionApiRef.current!.generateStoryboard() : undefined); }}
+        onGeneratePitchDeck={() => { void runProductionCommand("Pitch Deck", productionApiRef.current ? () => productionApiRef.current!.generatePitchDeck() : undefined); }}
+        onGenerateCreativeBible={() => { void runProductionCommand("Creative Bible", productionApiRef.current ? () => productionApiRef.current!.generateCreativeBible() : undefined); }}
+        onGenerateProductionPlan={() => { void runProductionCommand("Production Plan", productionApiRef.current ? () => productionApiRef.current!.generateProductionPlan() : undefined); }}
+        onGenerateMarketingPlan={() => { void runProductionCommand("Marketing Plan", productionApiRef.current ? () => productionApiRef.current!.generateMarketingPlan() : undefined); }}
+        onGenerateInvestorBrief={() => { void runProductionCommand("Investor Brief", productionApiRef.current ? () => productionApiRef.current!.generateInvestorBrief() : undefined); }}
+        onGenerateSocialCampaign={() => { void runProductionCommand("Social Campaign", productionApiRef.current ? () => productionApiRef.current!.generateSocialCampaign() : undefined); }}
+        onGenerateProjectBrief={() => { void runProductionCommand("Project Brief", productionApiRef.current ? () => productionApiRef.current!.generateProjectBrief() : undefined); }}
+        onExportPDF={() => { void runExportCommand("PDF", productionApiRef.current ? () => productionApiRef.current!.exportActivePDF() : undefined); }}
+        onExportPowerPoint={() => { void runExportCommand("PowerPoint", productionApiRef.current ? () => productionApiRef.current!.exportActivePowerPoint() : undefined); }}
         onFocusExports={() => { void productionApiRef.current?.focusExports(); }}
         onFocusProduction={() => { void productionApiRef.current?.focusProduction(); }}
         onRenameProject={handleRenameCurrentProject}
         onDuplicateProject={handleDuplicateCurrentProject}
         onReturnToDashboard={handleBackToProjects}
+      />
+
+      <MuseNotificationCenter
+        notifications={notifications}
+        onDismiss={dismissNotification}
       />
 
       <AnimatePresence>

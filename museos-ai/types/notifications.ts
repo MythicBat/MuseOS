@@ -20,6 +20,6 @@ export interface CreateMuseNotification {
     type?: MuseNotificationType;
     title: string;
     message?: string;
-    duration?: string;
+    duration?: number;
     persistent?: boolean;
 }
