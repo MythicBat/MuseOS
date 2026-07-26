@@ -91,6 +91,7 @@ interface MuseSpotlightProps {
   onRenameProject?: () => void;
   onDuplicateProject?: () => void;
   onReturnToDashboard?: () => void;
+  onOpenActivityCenter?: () => void;
 }
 
 export default function MuseSpotlight({
@@ -116,6 +117,7 @@ export default function MuseSpotlight({
   onDuplicateProject,
   onRenameProject,
   onReturnToDashboard,
+  onOpenActivityCenter,
 }: MuseSpotlightProps) {
   const [query, setQuery] =
     useState("");
@@ -157,6 +159,7 @@ export default function MuseSpotlight({
         onRenameProject,
         onDuplicateProject,
         onReturnToDashboard,
+        onOpenActivityCenter,
         onClose: closeSpotlight,
       }),
     [
@@ -180,6 +183,7 @@ export default function MuseSpotlight({
         onRenameProject,
         onDuplicateProject,
         onReturnToDashboard,
+        onOpenActivityCenter,
         closeSpotlight,
     ]
   );
@@ -529,6 +533,7 @@ interface CreateSpotlightActionsOptions {
   onRenameProject?: () => void;
   onDuplicateProject?: () => void;
   onReturnToDashboard?: () => void;
+  onOpenActivityCenter?: () => void;
 
   onClose: () => void;
 }
@@ -554,6 +559,7 @@ function createSpotlightActions({
   onDuplicateProject,
   onRenameProject,
   onReturnToDashboard,
+  onOpenActivityCenter,
   onClose,
 }: CreateSpotlightActionsOptions): SpotlightAction[] {
   const actions: SpotlightAction[] =
@@ -1018,6 +1024,21 @@ function createSpotlightActions({
         onSelect: () => {
           onClose();
           window.setTimeout(() => {onReturnToDashboard();}, 100);
+        },
+      });
+    }
+
+    if (onOpenActivityCenter) {
+      actions.push({
+        id: "open-activity-center",
+        label: "Open Activity Center",
+        description: "Review generations, export and project changes.",
+        group: "Workspace",
+        icon: (<History className="h-4 w-4" />),
+        keywords: ["activity", "history", "events", "notifications", "recent"],
+        onSelect: () => {
+          onClose();
+          window.setTimeout(() => {onOpenActivityCenter();}, 100);
         },
       });
     }

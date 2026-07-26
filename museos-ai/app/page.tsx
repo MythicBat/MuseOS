@@ -14,6 +14,7 @@ import Studio from "@/components/Studio";
 import ProjectDashboard from "@/components/dashboard/ProjectDashboard";
 import MuseSpotlight from "@/components/workspace/MuseSpotlight";
 import MuseNotificationCenter from "@/components/system/MuseNotificationCenter";
+import MuseActivityCenter from "@/components/system/MuseActivityCenter";
 import type { CreativeGraphProductionHandle } from "@/components/canvas/CreativeGraph";
 
 import {
@@ -23,7 +24,9 @@ import {
 
 import { useSavedProjects } from "@/hooks/useSavedProjects";
 import { useMuseNotifications } from "@/hooks/useMuseNotifications";
+import { useMuseActivity } from "@/hooks/useMuseActivity";
 import { AnimatePresence, motion } from "framer-motion";
+import { History } from "lucide-react";
 
 type AppView =
   | "hero"
@@ -39,10 +42,19 @@ export default function Home() {
     setSelectedProjectId,
   ] = useState<string | null>(null);
 
+  const [activityCenterOpen, setActivityCenterOpen] = useState(false);
+
   const [spotlightOpen, setSpotlightOpen] = useState(false);  
 
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameProjectValue, setRenameProjectValue] = useState("");
+
+  const {
+    activities,
+    addActivity,
+    deleteActivity,
+    clearActivities,
+  } = useMuseActivity();
 
   const {
     notifications,
@@ -108,7 +120,16 @@ export default function Home() {
       title: "Universe renamed",
       message: `${previousTitle} is now ${nextTitle}.`,
     });
-  }, [notify, renameProjectValue, selectedProject, renameProject]); 
+
+    addActivity({
+      type: "project",
+      status: "success",
+      title: "Universe renamed",
+      message: `${previousTitle} was renamed to ${nextTitle}.`,
+      projectId: selectedProject.id,
+      projectTitle: nextTitle,
+    });
+  }, [addActivity, notify, renameProjectValue, selectedProject, renameProject]); 
 
   const handleDuplicateCurrentProject =
   useCallback(() => {
@@ -134,7 +155,17 @@ export default function Home() {
       title: "Universe duplicated",
       message: `${duplicateProjectData.title} is ready to edit.`,
     });
+
+    addActivity({
+      type: "project",
+      status: "success",
+      title: "Universe duplicated.",
+      message: `${selectedProject.project.title} was copied as ${duplicateProjectData.title}.`,
+      projectId: duplicateId,
+      projectTitle: duplicateProjectData.title,
+    });
   }, [
+    addActivity,
     notify,
     saveProject,
     selectedProject,
@@ -209,6 +240,15 @@ export default function Home() {
       try {
         await command();
 
+        addActivity({
+          type: "generation",
+          status: "success",
+          title: `${label} generated`,
+          message: "The asset was added to Procution Studio.",
+          projectId: selectedProject?.id,
+          projectTitle: selectedProject?.project.title,
+        });
+
         updateNotification(
           notificationId,
           {
@@ -222,6 +262,15 @@ export default function Home() {
         const message = error instanceof Error
           ? error.message : `Unable to generate ${label.toLowerCase()}.`;
 
+        addActivity({
+          type: "generation",
+          status: "error",
+          title: `${label} generation failed`,
+          message,
+          projectId: selectedProject?.id,
+          projectTitle: selectedProject?.project.title,
+        });
+
         updateNotification(
           notificationId,
           {
@@ -233,7 +282,7 @@ export default function Home() {
         );
       }
     },
-    [notify, updateNotification]
+    [addActivity, selectedProject, notify, updateNotification]
   );
 
   const runExportCommand =
@@ -277,6 +326,15 @@ export default function Home() {
             duration: 4000,
           }
         );
+
+        addActivity({
+          type: "export",
+          status: "success",
+          title: `${label} exported`,
+          message: "The active production asset was downloaded.",
+          projectId: selectedProject?.id,
+          projectTitle: selectedProject?.project.title,
+        });
       } catch (error) {
         const message =
           error instanceof Error
@@ -292,9 +350,20 @@ export default function Home() {
             duration: 6000,
           }
         );
+
+        addActivity({
+          type: "export",
+          status: "error",
+          title: `${label} export failed`,
+          message,
+          projectId: selectedProject?.id,
+          projectTitle: selectedProject?.project.title,
+        });
       }
     },
     [
+      addActivity,
+      selectedProject,
       notify,
       updateNotification,
     ]
@@ -434,11 +503,20 @@ export default function Home() {
         onRenameProject={handleRenameCurrentProject}
         onDuplicateProject={handleDuplicateCurrentProject}
         onReturnToDashboard={handleBackToProjects}
+        onOpenActivityCenter={() => {setActivityCenterOpen(true);}}
       />
 
       <MuseNotificationCenter
         notifications={notifications}
         onDismiss={dismissNotification}
+      />
+
+      <MuseActivityCenter
+        open={activityCenterOpen}
+        activities={activities}
+        onClose={() => setActivityCenterOpen(false)}
+        onDelete={deleteActivity}
+        onClear={clearActivities}
       />
 
       <AnimatePresence>
