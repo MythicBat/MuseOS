@@ -37,6 +37,33 @@ export function useMuseActivity() {
     }
   });
 
+  const unreadCount = activities.reduce((count, activity) => activity.readAt ? count : count + 1, 0);
+
+  const markActivityRead = useCallback((id: string) => {
+    const readAt = Date.now();
+
+    setActivities((current) => current.map((activity) => 
+      activity.id === id && !activity.readAt ? {
+        ...activity,
+        readAt,
+      } : activity));
+  }, []);
+
+  const markAllActivitiesRead = useCallback(() => {
+    const readAt = Date.now();
+
+    setActivities((current) => {
+      const hasUnread = current.some((activity) => !activity.readAt);
+
+      if (!hasUnread) { return current; }
+
+      return current.map((activity) => activity.readAt ? activity : {
+        ...activity,
+        readAt,
+      });
+    });
+  }, []);
+
   useEffect(() => {
     try {
       window.localStorage.setItem(
@@ -105,9 +132,12 @@ export function useMuseActivity() {
 
   return {
     activities,
+    unreadCount,
     addActivity,
     deleteActivity,
     clearActivities,
+    markActivityRead,
+    markAllActivitiesRead,
   };
 }
 
@@ -124,12 +154,14 @@ function isMuseActivity(
   const candidate =
     value as Partial<MuseActivity>;
 
+  const hasValidReadAt = candidate.readAt === undefined || typeof candidate.readAt === "number";
+
   return (
     typeof candidate.id === "string" &&
     typeof candidate.type === "string" &&
     typeof candidate.status === "string" &&
     typeof candidate.title === "string" &&
-    typeof candidate.createdAt ===
-      "number"
+    typeof candidate.createdAt === "number" &&
+    hasValidReadAt
   );
 }

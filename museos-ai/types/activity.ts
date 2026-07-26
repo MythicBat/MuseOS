@@ -19,6 +19,7 @@ export interface MuseActivity {
     projectId?: string;
     projectTitle?: string;
     createdAt: number;
+    readAt?: number;
 }
 
 export interface CreateMuseActivity {

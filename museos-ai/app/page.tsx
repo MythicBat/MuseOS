@@ -51,9 +51,12 @@ export default function Home() {
 
   const {
     activities,
+    unreadCount,
     addActivity,
     deleteActivity,
     clearActivities,
+    markActivityRead,
+    markAllActivitiesRead,
   } = useMuseActivity();
 
   const {
@@ -86,6 +89,14 @@ export default function Home() {
       selectedProjectId,
     ]
   );
+
+  const handleOpenActivityCenter = useCallback(() => {
+    setActivityCenterOpen(true);
+
+    window.setTimeout(() => {
+      markAllActivitiesRead();
+    }, 300);
+  }, [markAllActivitiesRead]);
 
   const handleRenameCurrentProject = useCallback(() => {
     if (!selectedProject) { return; }
@@ -503,7 +514,7 @@ export default function Home() {
         onRenameProject={handleRenameCurrentProject}
         onDuplicateProject={handleDuplicateCurrentProject}
         onReturnToDashboard={handleBackToProjects}
-        onOpenActivityCenter={() => {setActivityCenterOpen(true);}}
+        onOpenActivityCenter={() => {setActivityCenterOpen(true); }}
       />
 
       <MuseNotificationCenter
@@ -514,9 +525,12 @@ export default function Home() {
       <MuseActivityCenter
         open={activityCenterOpen}
         activities={activities}
+        unreadCount={unreadCount}
         onClose={() => setActivityCenterOpen(false)}
         onDelete={deleteActivity}
         onClear={clearActivities}
+        onMarkRead={markActivityRead}
+        onMarkAllRead={markAllActivitiesRead}
       />
 
       <AnimatePresence>
