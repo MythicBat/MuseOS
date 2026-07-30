@@ -15,6 +15,7 @@ import ProjectDashboard from "@/components/dashboard/ProjectDashboard";
 import MuseSpotlight from "@/components/workspace/MuseSpotlight";
 import MuseNotificationCenter from "@/components/system/MuseNotificationCenter";
 import MuseActivityCenter from "@/components/system/MuseActivityCenter";
+import MuseToolbar from "@/components/system/MuseToolbar";
 import type { CreativeGraphProductionHandle } from "@/components/canvas/CreativeGraph";
 
 import {
@@ -26,7 +27,6 @@ import { useSavedProjects } from "@/hooks/useSavedProjects";
 import { useMuseNotifications } from "@/hooks/useMuseNotifications";
 import { useMuseActivity } from "@/hooks/useMuseActivity";
 import { AnimatePresence, motion } from "framer-motion";
-import { History } from "lucide-react";
 
 type AppView =
   | "hero"
@@ -41,6 +41,8 @@ export default function Home() {
     selectedProjectId,
     setSelectedProjectId,
   ] = useState<string | null>(null);
+
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const [activityCenterOpen, setActivityCenterOpen] = useState(false);
 
@@ -89,6 +91,24 @@ export default function Home() {
       selectedProjectId,
     ]
   );
+
+  const handleOpenSpotlight = useCallback(() => {
+    setSpotlightOpen(true);
+  }, []);
+
+  const handleOpenSettings = useCallback(() => {
+    setSettingsOpen(true);
+
+    notify({
+      type: "info",
+      title: "System Settings",
+      message: "MuseOS settings will be available.",
+    });
+  }, [notify]);
+
+  const handleCloseSettings = useCallback(() => {
+    setSettingsOpen(false);
+  },[]);
 
   const handleOpenActivityCenter = useCallback(() => {
     setActivityCenterOpen(true);
@@ -434,7 +454,20 @@ export default function Home() {
       <MouseGlow />
       <AmbientParticles />
 
-      <div className="relative z-10">
+      {view !== "hero" && (
+        <MuseToolbar
+          unreadActivityCount={unreadCount}
+          hasNotifications={notifications.length > 0}
+          providerLabel="IBM Granite"
+          providerOnline
+          onOpenSpotlight={handleOpenSpotlight}
+          onOpenActivity={handleOpenActivityCenter}
+          onOpenAlerts={handleOpenActivityCenter}
+          onOpenSettings={handleOpenSettings}
+        />
+      )}
+
+      <div className={`relative z-10 ${view !== "hero" ? "pt-24 sm:pt-28" : ""}`}>
         {view === "hero" ? (
           <Hero
             onStart={
@@ -514,7 +547,7 @@ export default function Home() {
         onRenameProject={handleRenameCurrentProject}
         onDuplicateProject={handleDuplicateCurrentProject}
         onReturnToDashboard={handleBackToProjects}
-        onOpenActivityCenter={() => {setActivityCenterOpen(true); }}
+        onOpenActivityCenter={handleOpenActivityCenter}
       />
 
       <MuseNotificationCenter
@@ -586,6 +619,59 @@ export default function Home() {
                   className="rounded-full bg-white px-4 py-2 text-xs font-medium text-black transition disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Rename
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {settingsOpen && (
+          <>
+            <motion.button
+              type="button"
+              aria-label="Close settings"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleCloseSettings}
+              className="fixed inset-0 z-[180] cursor-default bg-black/70 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              className="fixed left-1/2 top-1/2 z-[190] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-[30px] border border-white/10 bg-[#16141f] p-6 shadow-2xl"
+            >
+              <p className="text-xs uppercase tracking-[0.18em] text-white/30">MuseOS</p>
+
+              <h2 className="mt-2 text-xl font-semibold text-white">System Settings</h2>
+
+              <p className="mt-2 text-sm leading-6 text-white/40">
+              Theme, AI provider, generation preferences and export defaults will
+              be configured here in Phase 11.
+              </p>
+
+              <div className="mt-5 rounded-2xl border border-emerald-300/10 bg-emerald-400/[0.05] p-4">
+                <div className="flex items-center gap-3">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110, 231, 183, 0.8)]" />
+
+                  <div>
+                    <p className="text-sm font-medium text-emerald-100/80">IBM Granite</p>
+                    <p className="mt-0.5 text-xs text-white/30">Connected through watsonx.ai</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleCloseSettings}
+                  className="rounded-full bg-white px-4 py-2 text-xs font-medium text-black transition hover:bg-white/90"
+                >
+                  Done
                 </button>
               </div>
             </motion.div>
