@@ -16,6 +16,7 @@ import MuseSpotlight from "@/components/workspace/MuseSpotlight";
 import MuseNotificationCenter from "@/components/system/MuseNotificationCenter";
 import MuseActivityCenter from "@/components/system/MuseActivityCenter";
 import MuseToolbar from "@/components/system/MuseToolbar";
+import SystemSettings from "@/components/settings/SystemSettings";
 import type { CreativeGraphProductionHandle } from "@/components/canvas/CreativeGraph";
 
 import {
@@ -644,6 +645,14 @@ export default function Home() {
         onClear={clearActivities}
         onMarkRead={markActivityRead}
         onMarkAllRead={markAllActivitiesRead}
+      />
+
+      <SystemSettings
+        open={settingsOpen}
+        settings={settings}
+        onClose={handleCloseSettings}
+        onUpdateSettings={updateSettings}
+        onResetSettings={resetSettings}
       />
 
       <AnimatePresence>
