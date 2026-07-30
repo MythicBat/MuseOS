@@ -15,6 +15,13 @@ export type GlassIntensity =
   | "medium"
   | "high";
 
+export type AIProvider = 
+  | "granite"
+  | "openai"
+  | "ollama"
+  | "gemini"
+  | "claude";
+
 export interface MuseSettings {
   appearance: {
     theme: MuseTheme;
@@ -24,7 +31,11 @@ export interface MuseSettings {
   };
 
   ai: {
-    provider: "granite";
+    provider: AIProvider;
+    creativity: number;
+    temperature: number;
+    maxTokens: number;
+    streaming: boolean;
   };
 
   generation: {
@@ -50,6 +61,10 @@ export const DEFAULT_SETTINGS: MuseSettings = {
 
   ai: {
     provider: "granite",
+    creativity: 70,
+    temperature: 0.7,
+    maxTokens: 4096,
+    streaming: true,
   },
 
   generation: {
