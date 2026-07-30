@@ -16,3 +16,44 @@ body {
 button {
   cursor: pointer;
 }
+
+.muse-glass-low {
+  --muse-glass-blur: 10px;
+  --muse-glass-opacity: 0.94;
+}
+
+.muse-glass-medium {
+  --muse-glass-blur: 20px;
+  --muse-glass-opacity: 0.86;
+}
+
+.muse-glass-high {
+  --muse-glass-blur: 34px;
+  --muse-glass-opacity: 0.74;
+}
+
+.muse-accent-bg {
+  background-color:
+    rgb(var(--muse-accent));
+}
+
+.muse-accent-text {
+  color:
+    rgb(var(--muse-accent));
+}
+
+.muse-accent-border {
+  border-color:
+    rgb(
+      var(--muse-accent) /
+      0.25
+    );
+}
+
+.muse-accent-soft {
+  background-color:
+    rgb(
+      var(--muse-accent) /
+      0.1
+    );
+}

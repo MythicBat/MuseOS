@@ -26,12 +26,76 @@ import {
 import { useSavedProjects } from "@/hooks/useSavedProjects";
 import { useMuseNotifications } from "@/hooks/useMuseNotifications";
 import { useMuseActivity } from "@/hooks/useMuseActivity";
-import { AnimatePresence, motion } from "framer-motion";
+import { useMuseSettings } from "@/hooks/useMuseSettings";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
+import { MuseSettings } from "@/types/settings";
 
 type AppView =
   | "hero"
   | "dashboard"
   | "studio";
+
+function getThemeClass(theme: MuseSettings["appearance"]["theme"]): string {
+  switch (theme) {
+    case "midnight":
+      return "bg-[#020208]";
+    case "system":
+      return "bg-[#050510] dark:bg-[#050510]";
+    case "dark":
+    default:
+      return "bg-[#050510]";
+  }
+}
+
+function getGlassClass(intensity: MuseSettings["appearance"]["glassIntensity"]): string {
+  switch (intensity) {
+    case "low":
+      return "muse-glass-low";
+    case "high":
+      return "muse-glass-high";
+    case "medium":
+    default:
+      return "muse-glass-medium";
+  }
+}
+
+function getAccentVariables(
+  accent:
+    MuseSettings["appearance"]["accent"]
+): React.CSSProperties {
+  switch (accent) {
+    case "blue":
+      return {
+        "--muse-accent":
+          "96 165 250",
+      } as React.CSSProperties;
+
+    case "emerald":
+      return {
+        "--muse-accent":
+          "52 211 153",
+      } as React.CSSProperties;
+
+    case "rose":
+      return {
+        "--muse-accent":
+          "251 113 133",
+      } as React.CSSProperties;
+
+    case "amber":
+      return {
+        "--muse-accent":
+          "251 191 36",
+      } as React.CSSProperties;
+
+    case "violet":
+    default:
+      return {
+        "--muse-accent":
+          "167 139 250",
+      } as React.CSSProperties;
+  }
+}
 
 export default function Home() {
   const [view, setView] =
@@ -67,6 +131,12 @@ export default function Home() {
     updateNotification,
     dismissNotification,
   } = useMuseNotifications();
+
+  const {
+    settings,
+    updateSettings,
+    resetSettings,
+  } = useMuseSettings();
 
   const {
     projects,
@@ -449,10 +519,20 @@ export default function Home() {
   }, [spotlightOpen]);
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-[#050510] text-white">
+    <MotionConfig
+      reducedMotion={settings.appearance.reduceMotion ? "always" : "never"}
+    >
+    <main
+      style={getAccentVariables(settings.appearance.accent)}
+      className={`relative min-h-screen overflow-x-hidden text-white ${
+      getThemeClass(settings.appearance.theme)
+    } ${getGlassClass(settings.appearance.glassIntensity)}`}
+    >
       <BackgroundGlow />
       <MouseGlow />
-      <AmbientParticles />
+      {settings.workspace.showParticles && (
+        <AmbientParticles />
+      )}
 
       {view !== "hero" && (
         <MuseToolbar
@@ -679,6 +759,7 @@ export default function Home() {
         )}
       </AnimatePresence>
     </main>
+    </MotionConfig>
   );
 }
 
