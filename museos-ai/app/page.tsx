@@ -347,11 +347,14 @@ export default function Home() {
         return;
       }
 
+      const generationModelLabel = settings.generation.defaultMode === 
+        "fast" ? "Fast" : settings.generation.defaultMode === "quality" ? "Quality" : "Balanced";
+
       const notificationId = 
         notify({
           type: "loading",
           title: `Generating ${label}`,
-          message: "IBM Granite is building the production asset.",
+          message: `${generationModelLabel} generation is creating your ${label.toLowerCase()}.`,
           persistent: true,
         });
 
@@ -380,6 +383,7 @@ export default function Home() {
         const message = error instanceof Error
           ? error.message : `Unable to generate ${label.toLowerCase()}.`;
 
+        if (settings.generation.saveToHistory) {
         addActivity({
           type: "generation",
           status: "error",
@@ -387,7 +391,7 @@ export default function Home() {
           message,
           projectId: selectedProject?.id,
           projectTitle: selectedProject?.project.title,
-        });
+        });}
 
         updateNotification(
           notificationId,
@@ -400,7 +404,14 @@ export default function Home() {
         );
       }
     },
-    [addActivity, selectedProject, notify, updateNotification]
+    [
+      addActivity, 
+      selectedProject, 
+      notify, 
+      updateNotification, 
+      settings.generation.defaultMode, 
+      settings.generation.saveToHistory
+    ]
   );
 
   const runExportCommand =
