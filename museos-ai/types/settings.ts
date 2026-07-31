@@ -35,6 +35,20 @@ export type GenerationMode =
   | "fast"
   | "quality";
 
+export type ExportFormat = 
+  | "pdf"
+  | "pptx"
+  | "markdown"
+  | "docx";
+
+export type ExportQuality = 
+  | "standard"
+  | "high";
+
+export type PdfPageSize = 
+  | "A4"
+  | "Letter";
+
 export interface MuseSettings {
   appearance: {
     theme: MuseTheme;
@@ -62,6 +76,12 @@ export interface MuseSettings {
 
   export: {
     defaultFormat: "pdf";
+    pdfPageSize: PdfPageSize;
+    quality: ExportQuality;
+    includeBranding: boolean;
+    includeMetadata: boolean;
+    compressImages: boolean;
+    openAfterExport: boolean;
   };
 
   workspace: {
@@ -96,6 +116,12 @@ export const DEFAULT_SETTINGS: MuseSettings = {
 
   export: {
     defaultFormat: "pdf",
+    pdfPageSize: "A4",
+    quality: "high",
+    includeBranding: true,
+    includeMetadata: true,
+    compressImages: true,
+    openAfterExport: true,
   },
 
   workspace: {
