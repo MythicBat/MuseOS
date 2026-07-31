@@ -30,6 +30,11 @@ export type AIProvider =
   | "gemini"
   | "claude";
 
+export type GenerationMode = 
+  | "balanced"
+  | "fast"
+  | "quality";
+
 export interface MuseSettings {
   appearance: {
     theme: MuseTheme;
@@ -48,6 +53,11 @@ export interface MuseSettings {
 
   generation: {
     autoSave: boolean;
+    autoVersioning: boolean;
+    autoTitles: boolean;
+    saveToHistory: boolean;
+    confirmBeforeReplace: boolean;
+    defaultMode: GenerationMode;
   };
 
   export: {
@@ -77,6 +87,11 @@ export const DEFAULT_SETTINGS: MuseSettings = {
 
   generation: {
     autoSave: true,
+    autoVersioning: true,
+    autoTitles: true,
+    saveToHistory: true,
+    confirmBeforeReplace: true,
+    defaultMode: "balanced",
   },
 
   export: {
