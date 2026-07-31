@@ -75,7 +75,7 @@ export interface MuseSettings {
   };
 
   export: {
-    defaultFormat: "pdf";
+    defaultFormat: ExportFormat;
     pdfPageSize: PdfPageSize;
     quality: ExportQuality;
     includeBranding: boolean;
