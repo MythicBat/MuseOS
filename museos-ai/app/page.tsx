@@ -433,12 +433,16 @@ export default function Home() {
         return;
       }
 
+      const exportFormatLabel = settings.export.defaultFormat === "pptx" ? "PowerPoint" : 
+        settings.export.defaultFormat === "markdown" ? "Markdown" : settings.export.defaultFormat === "docx" ? "Word" : "PDF";
+        
+      const exportQualityLabel = settings.export.quality === "high" ? "High Quality" : "Standard Quality";
+
       const notificationId =
         notify({
           type: "loading",
           title: `Preparing ${label}`,
-          message:
-            "MuseOS is packaging the active asset.",
+          message: `${exportFormatLabel} • ${exportQualityLabel}`,
           persistent: true,
         });
 
@@ -450,8 +454,7 @@ export default function Home() {
           {
             type: "success",
             title: `${label} exported`,
-            message:
-              "Your file is ready.",
+            message: `${exportFormatLabel} • ${exportQualityLabel}`,
             duration: 4000,
           }
         );
@@ -460,7 +463,7 @@ export default function Home() {
           type: "export",
           status: "success",
           title: `${label} exported`,
-          message: "The active production asset was downloaded.",
+          message: `${exportFormatLabel} export completed successfully.`,
           projectId: selectedProject?.id,
           projectTitle: selectedProject?.project.title,
         });
@@ -495,6 +498,8 @@ export default function Home() {
       selectedProject,
       notify,
       updateNotification,
+      settings.export.defaultFormat,
+      settings.export.quality,
     ]
   );
 
