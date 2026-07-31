@@ -1,3 +1,11 @@
+export type SettingsSection = 
+  | "appearance"
+  | "ai"
+  | "generation"
+  | "export"
+  | "workspace"
+  | "about";
+
 export type MuseTheme =
   | "dark"
   | "midnight"

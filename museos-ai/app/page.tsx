@@ -98,6 +98,22 @@ function getAccentVariables(
   }
 }
 
+function getProviderLabel(provider: MuseSettings["ai"]["provider"]): string {
+  switch (provider) {
+    case "openai":
+      return "OpenAI";
+    case "gemini":
+      return "Gemini";
+    case "claude":
+      return "Claude";
+    case "ollama":
+      return "Ollama";
+    case "granite":
+    default:
+      return "IBM Granite";
+  }
+}
+
 export default function Home() {
   const [view, setView] =
     useState<AppView>("hero");
@@ -539,8 +555,8 @@ export default function Home() {
         <MuseToolbar
           unreadActivityCount={unreadCount}
           hasNotifications={notifications.length > 0}
-          providerLabel="IBM Granite"
-          providerOnline
+          providerLabel={getProviderLabel(settings.ai.provider)}
+          providerOnline={settings.ai.provider === "granite"}
           onOpenSpotlight={handleOpenSpotlight}
           onOpenActivity={handleOpenActivityCenter}
           onOpenAlerts={handleOpenActivityCenter}
