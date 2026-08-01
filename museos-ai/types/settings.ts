@@ -49,6 +49,25 @@ export type PdfPageSize =
   | "A4"
   | "Letter";
 
+export type StartupView = 
+  | "dashboard"
+  | "last-project";
+
+export type SidebarBehavior = 
+  | "expanded"
+  | "collapsed"
+  | "remember";
+
+export type AnimationSpeed = 
+  | "slow"
+  | "normal"
+  | "fast";
+
+export type PerformanceMode = 
+  | "quality"
+  | "balanced"
+  | "performance";
+
 export interface MuseSettings {
   appearance: {
     theme: MuseTheme;
@@ -86,6 +105,13 @@ export interface MuseSettings {
 
   workspace: {
     showParticles: boolean;
+    startupView: StartupView;
+    sidebarBehavior: SidebarBehavior;
+    animationSpeed: AnimationSpeed;
+    performanceMode: PerformanceMode;
+    dockAutoHide: boolean;
+    defaultZoom: number;
+    developerMode: boolean;
   };
 }
 
@@ -126,5 +152,12 @@ export const DEFAULT_SETTINGS: MuseSettings = {
 
   workspace: {
     showParticles: true,
+    startupView: "dashboard",
+    sidebarBehavior: "remember",
+    animationSpeed: "normal",
+    performanceMode: "balanced",
+    dockAutoHide: false,
+    defaultZoom: 100,
+    developerMode: false,
   },
 };
