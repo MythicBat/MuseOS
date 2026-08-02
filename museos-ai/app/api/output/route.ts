@@ -13,7 +13,7 @@ import {
 
 import { createAIManager } from "@/lib/ai";
 import { buildProductionOutputPrompt } from "@/lib/prompts";
-import { getServerSettings } from "@/src/lib/settings/serverSettings";
+import { getServerSettings } from "@/lib/settings/serverSettings";
 
 const supportedOutputTypes: ProductionOutputType[] = [
   "pitch-deck",
@@ -111,7 +111,9 @@ export async function POST(request: Request) {
 
       provider = result.provider === "granite" ? "watsonx" : "fallback";
     } catch (error) {
-      console.error("AI provider output generation failed:",error);
+      const message = error instanceof Error ? error.message : "Unknown AI Provider error.";
+
+      console.error("AI provider output generation failed:",message);
 
       const fallback = createFallbackOutput(outputType, project);
 

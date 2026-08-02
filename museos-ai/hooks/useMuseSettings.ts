@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { DEFAULT_SETTINGS, type MuseSettings, } from "@/types/settings";
+import { syncSettingsToServer } from "@/lib/settings/syncSettings";
 
 const STORAGE_KEY = "museos-settings-v1";
 
@@ -45,7 +46,21 @@ export function useMuseSettings() {
     const [settings, setSettings] = useState<MuseSettings>(loadSettings);
 
     useEffect(() => {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        try {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        } catch {
+            // Local persistance is non-critical
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            void syncSettingsToServer(settings).catch((error) => {
+                console.error("MuseOS settings sync failed:", error);
+            });
+        }, 250);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
     }, [settings]);
 
     const updateSettings = useCallback(
