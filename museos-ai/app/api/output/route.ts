@@ -11,14 +11,9 @@ import {
   StructuredProductionOutput,
 } from "@/types/creative";
 
-import {
-  getWatsonxClient,
-  getWatsonxModelId,
-  getWatsonxProjectId,
-  isWatsonxConfigured,
-} from "@/lib/watsonx";
-
+import { createAIManager } from "@/lib/ai";
 import { buildProductionOutputPrompt } from "@/lib/prompts";
+import { getServerSettings } from "@/src/lib/settings/serverSettings";
 
 const supportedOutputTypes: ProductionOutputType[] = [
   "pitch-deck",
@@ -103,54 +98,25 @@ export async function POST(request: Request) {
 
     let provider: "watsonx" | "fallback";
 
-    if (isWatsonxConfigured()) {
-      try {
-        const graniteResult =
-          await generateWithGranite(prompt);
+    try {
+      const result = await generateOutput(prompt);
 
-        if (isStructuredType(outputType)) {
-          structuredData =
-            parseStructuredOutput(
-              graniteResult,
-              outputType
-            );
+      if (isStructuredType(outputType)) {
+        structuredData = parseStructuredOutput(result.text, outputType);
 
-          content =
-            structuredOutputToText(
-              structuredData
-            );
-        } else {
-          content = graniteResult;
-        }
-
-        provider = "watsonx";
-      } catch (error) {
-        console.error(
-          "Granite output generation failed:",
-          error
-        );
-
-        const fallback =
-          createFallbackOutput(
-            outputType,
-            project
-          );
-
-        content = fallback.content;
-        structuredData =
-          fallback.structuredData;
-        provider = "fallback";
+        content = structuredOutputToText(structuredData);
+      } else {
+        content = result.text;
       }
-    } else {
-      const fallback =
-        createFallbackOutput(
-          outputType,
-          project
-        );
+
+      provider = result.provider === "granite" ? "watsonx" : "fallback";
+    } catch (error) {
+      console.error("AI provider output generation failed:",error);
+
+      const fallback = createFallbackOutput(outputType, project);
 
       content = fallback.content;
-      structuredData =
-        fallback.structuredData;
+      structuredData = fallback.structuredData;
       provider = "fallback";
     }
 
@@ -185,45 +151,6 @@ export async function POST(request: Request) {
   }
 }
 
-async function generateWithGranite(
-  prompt: string
-): Promise<string> {
-  const watsonx = getWatsonxClient();
-
-  const response = await watsonx.textChat({
-    modelId: getWatsonxModelId(),
-    projectId: getWatsonxProjectId(),
-
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are MuseOS, a senior creative director and production strategist.",
-      },
-      {
-        role: "user",
-        content: prompt,
-      },
-    ],
-
-    maxTokens: 4000,
-    temperature: 0.5,
-  });
-
-  const content =
-    response.result.choices?.[0]?.message?.content;
-
-  if (
-    typeof content !== "string" ||
-    !content.trim()
-  ) {
-    throw new Error(
-      "Granite returned an empty production output."
-    );
-  }
-
-  return content.trim();
-}
 
 function isStructuredType(
   outputType: ProductionOutputType
@@ -247,14 +174,14 @@ function parseStructuredOutput(
     parsed = JSON.parse(cleanedContent);
   } catch {
     throw new Error(
-      "Granite returned invalid structured JSON."
+      "AI Provider returned invalid structured JSON."
     );
   }
 
   if (outputType === "storyboard") {
     if (!isStoryboardOutput(parsed)) {
       throw new Error(
-        "Granite returned an invalid storyboard structure."
+        "AI Provider returned an invalid storyboard structure."
       );
     }
 
@@ -263,7 +190,7 @@ function parseStructuredOutput(
 
   if (!isPitchDeckOutput(parsed)) {
     throw new Error(
-      "Granite returned an invalid pitch-deck structure."
+      "AI Provider returned an invalid pitch-deck structure."
     );
   }
 
@@ -486,6 +413,23 @@ ${output.deckSubtitle}
 ${slides}`;
 }
 
+async function generateOutput(
+  prompt: string
+) {
+
+  const settings = await getServerSettings();
+  const manager = createAIManager(settings.ai.provider);
+
+  return manager.generate({
+    prompt,
+    systemPrompt:
+      "You are MuseOS, a senior creative director and production strategist.",
+    temperature: settings.ai.temperature,
+    maxTokens: settings.ai.maxTokens,
+    stream: settings.ai.streaming,
+  });
+}
+
 function isCreativeProject(
   value: unknown
 ): value is CreativeProject {
@@ -590,7 +534,7 @@ Palette: ${project.dna.colors.join(", ")}
 Creative direction:
 ${relevantSection}
 
-This fallback deliverable preserves the current creative universe. Regenerate when IBM Granite is available for a more detailed production document.`,
+This fallback deliverable preserves the current creative universe. Regenerate when the configured AI provider is available for a more detailed production document.`,
   };
 }
 
