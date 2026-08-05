@@ -4,6 +4,7 @@ export class OpenAIProvider implements MuseAIProvider {
     readonly id = "openai" as const;
     readonly label = "OpenAI";
     readonly model = "not-configured";
+    readonly supportsStreaming = false;
 
     isConfigured(): boolean {
         return false;

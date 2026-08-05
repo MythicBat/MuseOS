@@ -25,6 +25,7 @@ export interface MuseAIProvider {
     readonly id: AIProviderId;
     readonly label: string;
     readonly model: string;
+    readonly supportsStreaming: boolean;
 
     isConfigured(): boolean;
     generate(request: AIRequest): Promise<AIResponse>;

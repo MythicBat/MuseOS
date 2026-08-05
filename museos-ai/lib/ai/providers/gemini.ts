@@ -11,6 +11,7 @@ export class GeminiProvider
   readonly label =
     "Google Gemini";
   readonly model = "not-configured";
+  readonly supportsStreaming = false;
 
   isConfigured(): boolean {
     return false;

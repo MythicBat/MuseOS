@@ -6,6 +6,7 @@ import { getWatsonxClient, getWatsonxModelId, getWatsonxProjectId, isWatsonxConf
 export class GraniteProvider implements MuseAIProvider {
     readonly id = "granite" as const;
     readonly label = "IBM Granite";
+    readonly supportsStreaming = false;
 
     get model(): string {
         return getWatsonxModelId();

@@ -11,6 +11,7 @@ export class ClaudeProvider
   readonly label =
     "Anthropic Claude";
   readonly model = "not-configured";
+  readonly supportsStreaming = false;
 
   isConfigured(): boolean {
     return false;
