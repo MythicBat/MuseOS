@@ -28,6 +28,7 @@ import { useSavedProjects } from "@/hooks/useSavedProjects";
 import { useMuseNotifications } from "@/hooks/useMuseNotifications";
 import { useMuseActivity } from "@/hooks/useMuseActivity";
 import { useMuseSettings } from "@/hooks/useMuseSettings";
+import { useAIProviderStatus } from "@/hooks/useAIProviderStatus";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { MuseSettings } from "@/types/settings";
 
@@ -131,6 +132,15 @@ export default function Home() {
 
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameProjectValue, setRenameProjectValue] = useState("");
+
+  const {
+    providers: aiProviderStatuses,
+    loading: aiProviderStatusLoading,
+    error: aiProviderStatusError,
+    checkedAt: aiProviderCheckedAt,
+    refresh: refreshAIProviderStatus,
+    getProviderStatus,
+  } = useAIProviderStatus();
 
   const {
     activities,
@@ -247,7 +257,9 @@ export default function Home() {
       projectId: selectedProject.id,
       projectTitle: nextTitle,
     });
-  }, [addActivity, notify, renameProjectValue, selectedProject, renameProject]); 
+  }, [addActivity, notify, renameProjectValue, selectedProject, renameProject]);
+
+  const activeAIProviderStatus = getProviderStatus(settings.ai.provider);
 
   const handleDuplicateCurrentProject =
   useCallback(() => {
@@ -572,7 +584,7 @@ export default function Home() {
           unreadActivityCount={unreadCount}
           hasNotifications={notifications.length > 0}
           providerLabel={getProviderLabel(settings.ai.provider)}
-          providerOnline={settings.ai.provider === "granite"}
+          providerOnline={activeAIProviderStatus?.status === "connected"}
           onOpenSpotlight={handleOpenSpotlight}
           onOpenActivity={handleOpenActivityCenter}
           onOpenAlerts={handleOpenActivityCenter}
@@ -685,6 +697,11 @@ export default function Home() {
         onClose={handleCloseSettings}
         onUpdateSettings={updateSettings}
         onResetSettings={resetSettings}
+        aiProviderStatuses={aiProviderStatuses}
+        aiProviderStatusLoading={aiProviderStatusLoading}
+        aiProviderStatusError={aiProviderStatusError}
+        aiProviderCheckedAt={aiProviderCheckedAt}
+        onRefreshAIProviderStatus={refreshAIProviderStatus}
       />
 
       <AnimatePresence>

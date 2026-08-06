@@ -15,6 +15,7 @@ import type {
   MuseSettings,
   SettingsSection,
 } from "@/types/settings";
+import type { AIProviderStatus } from "@/types/aiProviderStatus";
 
 
 import AppearancePanel from "@/components/settings/panels/AppearancePanel";
@@ -41,14 +42,24 @@ interface SystemSettingsProps {
   ) => void;
 
   onResetSettings: () => void;
+  aiProviderStatuses: AIProviderStatus[];
+  aiProviderStatusLoading: boolean;
+  aiProviderStatusError: string | null;
+  aiProviderCheckedAt: number | null;
+  onRefreshAIProviderStatus: () => Promise<void>;
 }
 
 export default function SystemSettings({
   open,
   settings,
+  aiProviderStatuses,
+  aiProviderCheckedAt,
+  aiProviderStatusError,
+  aiProviderStatusLoading,
   onClose,
   onUpdateSettings,
   onResetSettings,
+  onRefreshAIProviderStatus,
 }: SystemSettingsProps) {
   const [
     activeSection,
@@ -183,6 +194,11 @@ export default function SystemSettings({
                     settings={
                       settings.ai
                     }
+                    providerStatuses={aiProviderStatuses}
+                    statusLoading={aiProviderStatusLoading}
+                    statusError={aiProviderStatusError}
+                    checkedAt={aiProviderCheckedAt}
+                    onRefreshStatus={onRefreshAIProviderStatus}
                     onChange={(
                       updates
                     ) =>

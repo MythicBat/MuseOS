@@ -9,13 +9,20 @@ import {
     Radio,
     Sparkles,
     Waves,
+    RefreshCw,
 } from "lucide-react";
 
 import type { AIProvider, MuseSettings } from "@/types/settings";
+import type { AIProviderStatus } from "@/types/aiProviderStatus";
 
 interface AISettingsPanelProps {
     settings: MuseSettings["ai"];
+    providerStatuses: AIProviderStatus[];
+    statusLoading: boolean;
+    statusError: string | null;
+    checkedAt: number | null;
 
+    onRefreshStatus: () => Promise<void>;
     onChange: (updates: Partial<MuseSettings["ai"]>) => void;
 }
 
@@ -25,7 +32,6 @@ interface ProviderOption {
     subtitle: string;
     description: string;
     icon: typeof Cpu;
-    connected: boolean;
 }
 
 const providers: ProviderOption[] = [
@@ -36,7 +42,6 @@ const providers: ProviderOption[] = [
     description:
       "Primary MuseOS provider for creative reasoning and production generation.",
     icon: Cpu,
-    connected: true,
   },
   {
     id: "openai",
@@ -45,7 +50,6 @@ const providers: ProviderOption[] = [
     description:
       "Cloud-based language and multimodal models.",
     icon: Sparkles,
-    connected: false,
   },
   {
     id: "gemini",
@@ -54,7 +58,6 @@ const providers: ProviderOption[] = [
     description:
       "Google multimodal models for text, image and reasoning tasks.",
     icon: Cloud,
-    connected: false,
   },
   {
     id: "claude",
@@ -63,7 +66,6 @@ const providers: ProviderOption[] = [
     description:
       "Long-context models designed for analysis and creative writing.",
     icon: BrainCircuit,
-    connected: false,
   },
   {
     id: "ollama",
@@ -72,7 +74,6 @@ const providers: ProviderOption[] = [
     description:
       "Run supported models locally for private and offline generation.",
     icon: Laptop,
-    connected: false,
   },
 ];
 
@@ -86,10 +87,18 @@ const tokenOptions = [
 
 export default function AISettingsPanel({
     settings,
+    providerStatuses,
+    statusLoading,
+    statusError,
+    checkedAt,
+    onRefreshStatus,
     onChange,
 }: AISettingsPanelProps) {
     const activeProvider = providers.find((provider) => provider.id === settings.provider) ?? providers[0];
 
+    const activeServerStatus = providerStatuses.find((status) => status.id === settings.provider);
+    const activeConnected = activeServerStatus?.status === "connected";
+    const activeStatusLabel = statusLoading ? "Checking" : activeConnected ? "Connected" : activeServerStatus?.status === "unavailable" ? "Unavailable" : "Configuration required";
     const creativityLabel = getCreativityLabel(settings.creativity);
 
     return (
@@ -103,11 +112,43 @@ export default function AISettingsPanel({
                 title="AI Provider"
                 description="Choose the provider MuseOS should use for future generation requests."
             >
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-white/10 bg-white/[0.025] px-4 py-3">
+                    <div>
+                        <p className="text-xs font-medium text-white/55">Provider configuration</p>
+
+                        <p className="mt-1 text-[10px] text-white/25">
+                            {statusLoading ? "Checking server configuration..." : checkedAt ? `Last checked ${formatStatusTime(checkedAt)}` : "Status has not been checked."}
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        disabled={statusLoading}
+                        onClick={() => { void onRefreshStatus(); }}
+                        className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] text-white/45 transition hover:bg-white/10 hover:text-white/70 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                        <RefreshCw className={`h-3.5 w-3.5 ${statusLoading ? "animate-spin" : ""}`} />
+                        Refresh
+                    </button>
+                </div>
+
+                {statusError && (
+                    <div className="mb-4 rounded-[20px] border border-red-300/10 bg-red-400/[0.05] p-4">
+                        <p className="text-sm font-medium text-red-100/70">Unable to check providers</p>
+
+                        <p className="mt-1 text-xs leading-5 text-white/35">{statusError}</p>
+                    </div>
+                )}
+
                 <div className="grid gap-3 md:grid-cols-2">
                     {providers.map((provider) => {
                         const Icon = provider.icon;
 
                         const selected = provider.id === settings.provider;
+
+                        const serverStatus = providerStatuses.find((status) => status.id === provider.id);
+                        const connected = serverStatus?.status === "connected";
+                        const statusLabel = statusLoading ? "Checking" : connected ? "Connected" : serverStatus?.status === "unavailable" ? "Unavailable" : "Not configured";
 
                         return (
                             <button
@@ -144,15 +185,15 @@ export default function AISettingsPanel({
 
                                 <div className="mt-4 flex items-center gap-2">
                                     <span className={`h-2 w-2 rounded-full ${
-                                        provider.connected ? "bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.7)]" : "bg-amber-300/70"
+                                        statusLoading ? "bg-sky-300/70" : connected ? "bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.7)]" : serverStatus?.status === "unavailable" ? "bg-red-300/70" : "bg-amber-300/70"
                                     }`}
                                     />
 
                                     <span className={`text-[10px] uppercase tracking-[0.14em] ${
-                                        provider.connected ? "text-emerald-200/55" : "text-amber-200/45"
+                                        statusLoading ? "text-sky-200/45" : connected ? "text-emerald-200/55" : serverStatus?.status === "unavailable" ? "text-red-200/50" : "text-amber-200/45"
                                     }`}
                                     >
-                                        {provider.connected ? "Connected" : "Not configured"}
+                                        {statusLabel}
                                     </span>
                                 </div>
                             </button>
@@ -310,16 +351,16 @@ export default function AISettingsPanel({
                             <div>
                                 <p className="text-sm font-medium text-white/80">{activeProvider.name}</p>
 
-                                <p className="mt-1 text-xs text-white/30">{activeProvider.subtitle}</p>
+                                <p className="mt-1 text-xs text-white/30">{activeServerStatus?.model ?? activeProvider.subtitle}</p>
 
                                 <div className="mt-3 flex items-center gap-2">
                                     <span className={`h-2 w-2 rounded-full ${
-                                        activeProvider.connected ? "bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.7)]" : "bg-amber-300"
-                                    }`}
-                                    />
+                                        statusLoading ? "bg-sky-300" : activeConnected ? "bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.7)]"
+                                        : activeServerStatus?.status === "unavailable" ? "bg-red-300" : "bg-amber-300"
+                                    }`} />
 
                                     <span className="text-xs text-white/40">
-                                        {activeProvider.connected ? "Connected" : "Configuration required."}
+                                        {activeStatusLabel}
                                     </span>
                                 </div>
                             </div>
@@ -344,6 +385,11 @@ export default function AISettingsPanel({
                             <StatusValue
                                 label="Streaming"
                                 value={settings.streaming ? "Enabled" : "Disabled"}
+                            />
+
+                            <StatusValue
+                                label="Streaming Support"
+                                value={activeServerStatus?.supportsStreaming ? "Supported" : "Not available"}
                             />
                         </div>
                     </div>
@@ -372,6 +418,17 @@ export default function AISettingsPanel({
             </SettingsGroup>
         </div>
     );
+}
+
+function formatStatusTime(timestamp: number): string {
+    return new Intl.DateTimeFormat(
+        undefined,
+        {
+            hour: "numeric",
+            minute: "2-digit",
+            second: "2-digit",
+        }
+    ).format(new Date(timestamp));
 }
 
 function getCreativityLabel(value: number) : string {
