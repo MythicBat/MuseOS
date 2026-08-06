@@ -5,7 +5,7 @@ import type { AIProviderStatusResponse } from "@/types/aiProviderStatus";
 export async function GET() {
     try {
         const response: AIProviderStatusResponse = {
-            providers: getAIProviderStatuses(),
+            providers: await getAIProviderStatuses(),
             checkedAt: Date.now(),
         };
 
