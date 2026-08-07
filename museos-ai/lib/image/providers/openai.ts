@@ -1,4 +1,4 @@
-import type { GeneratedImage, ImageGenerationRequest, ImageProvider } from "../image/types";
+import type { GeneratedImage, ImageGenerationRequest, ImageProvider } from "../types";
 
 export class OpenAIImageProvider implements ImageProvider {
     readonly id = "openai";

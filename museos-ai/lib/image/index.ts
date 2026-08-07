@@ -1,6 +1,6 @@
 import { ImageProviderManager } from "./manager";
-import { ReplicateProvider } from "../providers/replicate";
-import { OpenAIImageProvider } from "../providers/openai";
+import { ReplicateProvider } from "./providers/replicate";
+import { OpenAIImageProvider } from "./providers/openai";
 
 export function createImageManager() {
     return new ImageProviderManager(new ReplicateProvider());
